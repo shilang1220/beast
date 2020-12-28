@@ -1,0 +1,44 @@
+#!/bin/bash
+# Copyright 2020 University of California, Riverside
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Runs the Beast main JAR file using spark-submit
+
+# Assign parameters that start with -- and the next parameters to Spark arguments
+i=1
+while [[ $i -le $# ]] && [[ ${!i} == --* ]]; do
+  j=$((i+1))
+  spark_args="$spark_args ${!i} ${!j}"
+  i=$((i+2))
+done
+
+# Search for an uber JAR where this file is located
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+STARJAR=$(find $DIR -maxdepth 2 -iname 'beast-uber-spark*.jar')
+echo "import edu.ucr.cs.bdlab.beast._" > /tmp/beast-startup.scala
+if [ -e "$STARJAR" ]; then
+  # Run using the JAR file
+  echo "Running from the JAR file '$STARJAR'"
+  cmd="spark-shell $spark_args --jars $STARJAR -I /tmp/beast-startup.scala"
+else
+  # Run from the Maven central JAR files
+  echo "Running the latest release on Maven"
+  cmd="spark-shell $spark_args --repositories https://repo.osgeo.org/repository/release/ \
+      --exclude-packages javax.media:jai_core \
+      --packages edu.ucr.cs.bdlab:beast-spark:0.8.0-RC1
+      -I /tmp/beast-startup.scala"
+fi
+
+# Now, run the command
+$cmd

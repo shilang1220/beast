@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2018 University of California, Riverside
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!-- Based on the examples at
+ https://openlayers.org/en/latest/doc/quickstart.html
+ https://openlayers.org/en/latest/examples/xyz.html and
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DaVinci Visualization</title>
+  <link rel='stylesheet' href='https://openlayers.org/en/v5.3.0/css/ol.css' type='text/css'>
+  <script src='https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js'></script>
+  <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+  <script src='https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL'></script>
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0px;
+      padding: 0px
+    }
+  </style>
+</head>
+<body>
+<div id="map" class="map"></div>
+<script>
+var mercator = #{MERCATOR};
+var mapLayers = [];
+if (mercator) {
+  // Add an OSM base layer if Mercator projection is used
+  mapLayers.push(new ol.layer.Tile({source: new ol.source.OSM() }));
+}
+// Add the customized map layer
+mapLayers.push(new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: '#{TILE_URL}',
+    tileSize: [#{TILE_WIDTH}, #{TILE_HEIGHT}],
+    attributions: '<a href="https://davinci.cs.ucr.edu">&copy;DaVinci</a>'
+  })
+}));
+var map = new ol.Map({
+  target: 'map',
+  layers: mapLayers,
+  view: new ol.View({
+    // Center the initial view at a specific longitude and latitude
+    center: ol.proj.fromLonLat([0, 0]),
+    zoom: 1,
+    minZoom: #{MIN_ZOOM},
+    maxZoom: #{MAX_ZOOM},
+  })
+});
+</script>
+</body>
+</html>

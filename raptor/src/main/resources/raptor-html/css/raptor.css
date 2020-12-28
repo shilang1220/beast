@@ -1,0 +1,59 @@
+body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#navigation {
+    flex-grow: 0;
+    display: grid;
+    grid-gap: 5px;
+    grid-template-areas:
+      "logo query"
+      "logo result";
+
+}
+
+#logo {
+    padding-left: 100px;
+    height: 48px;
+    line-height: 48px;
+    font-size: 48px;
+    background-image: url('../images/UCR.png');
+    background-position: left;
+    background-repeat: no-repeat;
+    background-size: contain;
+    grid-area: logo;
+}
+
+#querybar {
+    height: 24px;
+    grid-area: query;
+}
+
+#queryform {
+    display: inline;
+}
+
+#results {
+    height: 24px;
+    grid-area: result;
+}
+
+.result {
+    display: inline-block;
+    min-width: 50px;
+    height: 1.2em;
+    border: solid 1px rgb(64, 64, 64);
+}
+
+#map {
+    flex-grow: 1;
+    background-color: rgb(200, 200, 200);
+}
+
