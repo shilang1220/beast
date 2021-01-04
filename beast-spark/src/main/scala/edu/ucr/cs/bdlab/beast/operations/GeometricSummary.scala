@@ -74,6 +74,7 @@ object GeometricSummary extends CLIOperation with Logging {
     */
   override def run(opts: BeastOptions, inputs: Array[String], outputs: Array[String], sc: SparkContext): Any = {
     val inputFeatures = sc.spatialFile(inputs(0), opts)
+
     val summary =
     try {
       // If we can get some feature writer class successfully, compute a summary with output format
@@ -82,13 +83,16 @@ object GeometricSummary extends CLIOperation with Logging {
     } catch {
       case e: Exception => Summary.computeForFeatures(inputFeatures)
     }
+
     val feature: IFeature = inputFeatures.first()
     // Writing directly to System.out caused the tests to terminate incorrectly in IntelliJ IDEA
     val generatedJSON = new ByteArrayOutputStream()
     val jsonGenerator: JsonGenerator = new JsonFactory().createGenerator(generatedJSON)
+
     jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter)
     Summary.writeSummaryWithSchema(jsonGenerator, summary, feature)
     jsonGenerator.close
+
     System.out.write(generatedJSON.toByteArray)
     System.out.println
     summary

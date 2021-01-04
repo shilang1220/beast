@@ -57,18 +57,26 @@ object Index extends CLIOperation with Logging {
   @throws(classOf[IOException])
   override def run(opts: BeastOptions, inputs: Array[String], outputs: Array[String], sc: SparkContext): Any = {
     // Extract index parameters from the command line arguments
+    // 第一步： 根据用户指定的索引类型创建分区器
     val gIndex = opts.getString(IndexHelper.GlobalIndex, "rsgrove")
+    //根据用户指定生成分区器
     val partitionerClass: Class[_ <: SpatialPartitioner] = IndexHelper.partitioners.get(gIndex).get
 
     // Start processing the input to build the index
     // Read the input features
-    val rdds = inputs.zipWithIndex
-      .map(ii => sc.spatialFile(ii._1, opts.retainIndex(ii._2)))
+    //第二部：读取空间数据集SpatialRDD
+    val rdds = inputs.zipWithIndex.map(ii => sc.spatialFile(ii._1, opts.retainIndex(ii._2)))
+    //创建SpatialRDD
     val features: SpatialRDD = if(rdds.length == 1) rdds.head else sc.union(rdds)
+
     // Partition the input records using the created partitioner
+    //第三步：利用分区器对输入记录创建分区，并生成PartitionedSpatialRDD
+    // features输入的RDD，partitionerClass为分区器，FeatureWriterSizeFunction为输出文件格式写，opts为分区命令的参数
     val partitionedFeatures: PartitionedSpatialRDD = IndexHelper.partitionFeatures(features, partitionerClass,
       new FeatureWriterSizeFunction(opts), opts)
+
     // Save the index to disk
+    //第四步：物理分区完成后，将分区索引文件保存到指定文件（夹）中
     IndexHelper.saveIndex(partitionedFeatures, outputs(0), opts)
   }
 }

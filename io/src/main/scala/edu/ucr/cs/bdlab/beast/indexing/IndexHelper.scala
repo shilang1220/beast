@@ -35,20 +35,27 @@ import org.apache.spark.rdd.RDD
 /**
  * A helper object for creating indexes and partitioning [[SpatialRDD]]s
  */
+
 object IndexHelper extends Logging {
   /**The different ways for specifying the number of partitions*/
+  /**定义分区原则，目前支持四种：指定分区数量、分区内要素数相同（单分区要素数量固定）、分区按照指定大小（单分区容量固定）*/
   trait PartitionCriterion
   /**The number of partitions is explicitly specified*/
+  // 采用固定分区数量的分区方案
   case object Fixed extends PartitionCriterion
   /**The number of partitions is adjusted so that each partition has a number of features*/
+  //采用可变数量的分区方案，分区依据：每个分区中features数量相同
   case object FeatureCount extends PartitionCriterion
   /**The number of partitions is adjusted so that each partition has a specified size*/
+  //采用可变数量的分区方案，分区依据：每个分区有指定的大小
   case object Size extends PartitionCriterion
 
   /**Information that is used to calculated the number of partitions*/
+  //用于计算分区数目的信息，pc为采用的分区方案，value为该方案所需的参数，如：固定分区方案的value为分区数，固定要素数方案的value为单分区指定要素数量，固定分区大小方案的value为单分区指定字节数
   case class NumPartitions(pc: PartitionCriterion, value: Long)
 
   /**The type of the global index (partitioner)*/
+  //全局索引模型指示变量及其注释
   @OperationParam(
     description = "The type of the global index",
     required = false,
@@ -57,6 +64,7 @@ object IndexHelper extends Logging {
   val GlobalIndex = "gindex"
 
   /**Whether to build a disjoint index (with no overlapping partitions)*/
+  //分区是否允许重叠指示变量及其注释
   @OperationParam(
     description = "Build a disjoint index with no overlaps between partitions",
     defaultValue = "false"
@@ -64,6 +72,7 @@ object IndexHelper extends Logging {
   val DisjointIndex = "disjoint"
 
   /**The size of the synopsis used to summarize the input before building the index*/
+  //输入汇总的计量单位指示变量及注释
   @OperationParam(
     description = "The size of the synopsis used to summarize the input, e.g., 1024, 10m, 1g",
     defaultValue = "10m"
@@ -71,6 +80,7 @@ object IndexHelper extends Logging {
   val SynopsisSize = "synopsissize";
 
   /**A flag to increase the load balancing by using the histogram with the sample, if possible*/
+  // 均衡采样指示变量及注释，利用直方图可以分区调整采样率，以使分区更为均衡
   @OperationParam(
     description = "Set this option to combine the sample with a histogram for accurate load balancing",
     defaultValue = "true"
@@ -78,6 +88,7 @@ object IndexHelper extends Logging {
   val BalancedPartitioning = "balanced";
 
   /**The criterion used to calculate the number of partitions*/
+  //分区大小阈值指示变量，默认为128MB，
   @OperationParam(
     description =
       """The criterion used to compute the number of partitions. It can be one of:
@@ -98,9 +109,9 @@ object IndexHelper extends Logging {
    * @return the preferred number of partitions
    */
   def computeNumberOfPartitions(numPartitions: NumPartitions, summary: Summary): Int = numPartitions.pc match {
-    case Fixed => numPartitions.value.toInt
-    case FeatureCount => Math.ceil(summary.numFeatures.toDouble / numPartitions.value).toInt
-    case Size => Math.ceil(summary.size.toDouble / numPartitions.value).toInt
+    case Fixed => numPartitions.value.toInt     //当采用指定分区数分区方案时，直接返回指定分区数目
+    case FeatureCount => Math.ceil(summary.numFeatures.toDouble / numPartitions.value).toInt  //当采用固定要素数量分区方案时，按照要素总数/单分区要素数返回
+    case Size => Math.ceil(summary.size.toDouble / numPartitions.value).toInt //当采用固定分区大小方案时，返回数据集总数据量/单分区数据量返回
   }
 
   /**
@@ -146,8 +157,10 @@ object IndexHelper extends Logging {
     val balanced = opts.getBoolean(BalancedPartitioning, true)
 
     // Calculate the summary
+    // 第一步：计算数据集汇总信息（直方图、样本集和汇总信息）
     val t1 = System.nanoTime()
     val result = summarizeDataset(features.filter(f => !f.getGeometry.isEmpty), partitionerClass, synopsisSize, sizeFunction, balanced)
+    //返回的三元组（histogram，samples，summary）
     val histogram: UniformHistogram = result._1
     val sampleCoordinates: Array[Array[Double]] = result._2
     val summary: Summary = result._3
@@ -155,7 +168,11 @@ object IndexHelper extends Logging {
     val t2 = System.nanoTime
 
     // Now that the input set has been summarized, we can create the partitioner
+    //第二步：计算分区数量（利用分区参数和汇总信息执行分区操作，返回分区数量），并初始化分区器
     val numCells: Int = computeNumberOfPartitions(numPartitions, summary)
+
+    //如果只有一个分区，返回单元分区器（CellPartitioner）
+    //否则，创建分区器对象，并为分区对象设置分区参数
     if (numCells == 1) {
       logInfo("Input too small. Creating a cell partitioner with one cell")
       // Create a cell partitioner that contains one cell that represents the entire input
@@ -172,6 +189,7 @@ object IndexHelper extends Logging {
         throw new RuntimeException("Partitioner " + partitionerClass + " does not support disjoint partitioning")
 
       // Construct the partitioner
+      // 第三步：构造分区器。利用直方图、样本集和汇总信息，调用分区器的contruct方法构造分区
       val nump: Int = computeNumberOfPartitions(numPartitions, summary)
       spatialPartitioner.construct(summary, sampleCoordinates, histogram, nump)
       val t3 = System.nanoTime
@@ -211,6 +229,7 @@ object IndexHelper extends Logging {
 
   /**
    * Compute up-to three summaries as supported by the partitioner.
+   * 计算数据集（一个SpatialRDD）的（histogram, sampleCoordinates, summary）汇总三元组
    * [[HistogramOP]].Sparse method since the histogram size is usually large.
    * @param features the features to summarize
    * @param partitionerClass the partitioner class to compute the summaries for
@@ -267,6 +286,7 @@ object IndexHelper extends Logging {
 
   /**
    * Parse the partition criterion and value in the form "method(value)"
+   * 对字符串形式的分区原则参数进行解析，返回NumPartitions（pc，pvalue）对象
    * @param criterionValue a user-given string in the form "method(value)"
    * @return the parsed partition criterion and value
    */
@@ -289,25 +309,32 @@ object IndexHelper extends Logging {
 
   /**
    * An internal method for partitioning a set of features
+   * 读数据集进行物理分区的内部实现函数
    * @param features
    * @param spatialPartitioner
    * @return
    */
   private[beast] def _partitionFeatures(features: SpatialRDD, spatialPartitioner: SpatialPartitioner): PartitionedSpatialRDD = {
+
     val mbr: EnvelopeNDLite = new EnvelopeNDLite(spatialPartitioner.getCoordinateDimension)
     if (!spatialPartitioner.isDisjoint) {
       // Non disjoint partitioners are easy as each feature is assigned to exactly one partition
+      // 有重叠分区（1个记录对应1个分区）
       features.map(f => {
         mbr.setEmpty()
+        //根据要素的mbr生成 <分区ID号,要素> 键值对
         (spatialPartitioner.overlapPartition(mbr.merge(f.getGeometry)), f)
       })
     } else {
       // Disjoint partitioners need us to create a list of partition IDs for each record
+      // 非重叠分区（1个记录对应多个分区，需要生成每个记录的分区ID列表
       features.flatMap(f => {
         val matchedPartitions = new IntArray
         mbr.setEmpty()
         mbr.merge(f.getGeometry)
+        //根据要素的mbr，生成匹配的分区ID集合
         spatialPartitioner.overlapPartitions(mbr, matchedPartitions)
+        //构建<分区ID号,要素>键值对集合
         val resultingPairs = Array.ofDim[(Int, IFeature)](matchedPartitions.size())
         for (i <- 0 until matchedPartitions.size())
           resultingPairs(i) = (matchedPartitions.get(i), f)
@@ -337,7 +364,7 @@ object IndexHelper extends Logging {
    * @return a JavaPairRDD where the key represents the partition number and the value is the feature.
    */
   def partitionFeatures(features: JavaSpatialRDD, partitioner: SpatialPartitioner): JavaPairRDD[Integer, IFeature] = {
-    val pairs: RDD[(Integer, IFeature)] = IndexHelper
+        val pairs: RDD[(Integer, IFeature)] = IndexHelper
       ._partitionFeatures(features.rdd, partitioner)
       .map(kv => (kv._1, kv._2))
     JavaPairRDD.fromRDD(pairs.partitionBy(new SparkSpatialPartitioner(partitioner)))
@@ -348,6 +375,7 @@ object IndexHelper extends Logging {
   /**
    * Partitions the given features using a partitioner of the given type. This method first initializes the partitioner
    * and then uses this initialized partitioner to partition the data.
+   * 用指定分区器和参数执行数据集的分区操作，包含分区器创建和初始化，以及数据分区整个过程
    *
    * @param features         the RDD of features to partition
    * @param partitionerClass the partitioner class to use for partitioning
@@ -355,8 +383,12 @@ object IndexHelper extends Logging {
    */
   def partitionFeatures(features: SpatialRDD, partitionerClass: Class[_ <: SpatialPartitioner],
                         sizeFunction: IFeature=>Int, opts: BeastOptions): PartitionedSpatialRDD = {
+
+    //第一步：获取用户指定的分区基本参数
     val pInfo = parsePartitionCriterion(opts.getString(IndexHelper.PartitionCriterionThreshold, "Size(128m)"))
+    //第二步：依据用户参数创建和构造分区器
     val spatialPartitioner = createPartitioner(features, partitionerClass, pInfo, sizeFunction, opts)
+    //第三步： 利用分区器对数据集进行物理分区，生成partitionSpatialRDD
     partitionFeatures(features, spatialPartitioner)
   }
 
@@ -387,6 +419,7 @@ object IndexHelper extends Logging {
   /**
    * Stores the given partitioner to the distributed cache of Hadoop. This should be used when writing the index to
    * the output to give {@link IndexOutputFormat} access to the partitioner.
+   * 将分区器信息保存到Hadoop缓存中，以便后续索引信息的永久存储。
    *
    * @param hadoopConf  the hadoop configuration to write the partitioner in
    * @param partitioner the partitioner instance
@@ -409,6 +442,7 @@ object IndexHelper extends Logging {
 
   /**
    * Retrieves the value of a partitioner for a given job.
+   * 从hadoop的缓存中，读取分区器信息
    *
    * @param hadoopConf the hadoop configuration to read the partitioner from
    * @return an instance of the partitioner
@@ -468,6 +502,7 @@ object IndexHelper extends Logging {
 
   /**
    * (Java shortcut to) Save a partitioner dataset as a global index file to disk
+   * 将分区器数据集存储到永久存储的全局索引中
    *
    * @param partitionedFeatures features that are already partitioned using a spatial partitioner
    * @param path path to the output file to be written

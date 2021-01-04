@@ -80,6 +80,7 @@ public interface SpatialPartitioner extends Externalizable, Iterable<EnvelopeNDL
 
   /**
    * Initializes the partitioner before it is first constructed.
+   * 初始化分区器
    * @param conf the environment configuration
    * @param disjoint set to true to produce disjoint partitions with probable replication of some features
    */
@@ -91,6 +92,7 @@ public interface SpatialPartitioner extends Externalizable, Iterable<EnvelopeNDL
    * and the other two parameters {@code sample} and {@code histogram} are {@code null}. If any of these are needed,
    * the parameter should be annotated with {@link Required}. If any of them can be used to improve the results but
    * are not necessarily required, they can be annotated with {@link Preferred}.
+   * 构造分区器，分区器内包含所有分区ID和其外包
    * @param summary the summary of the input
    * @param sample a sample points from the input
    * @param histogram a histogram of the input
@@ -100,6 +102,7 @@ public interface SpatialPartitioner extends Externalizable, Iterable<EnvelopeNDL
 
   /**
    * Find all the overlapping partitions in an envelope (MBR).
+   *
    * @param mbr the MBR to find overlapping partitions
    * @param matchedPartitions an array to use for matched partitions
    */
