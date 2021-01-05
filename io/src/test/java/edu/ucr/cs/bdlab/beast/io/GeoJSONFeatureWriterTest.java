@@ -93,7 +93,7 @@ public class GeoJSONFeatureWriterTest extends JavaSparkTest {
     try {
       writer.initialize(outputFileName, conf);
       for (Geometry geom : geometries) {
-        Feature f = new Feature(geom, new String[] {"name"}, null, new Object[] {"name-value"});
+        Feature f = Feature.create(geom, new String[] {"name"}, null, new Object[] {"name-value"});
         writer.write(null, f);
       }
     } finally {
@@ -130,7 +130,7 @@ public class GeoJSONFeatureWriterTest extends JavaSparkTest {
     try {
       writer.initialize(outputFileName, conf);
       for (Geometry geom : geometries) {
-        Feature f = new Feature(geom, null, null, new Object[] {"name-value"});
+        Feature f = Feature.create(geom, null, null, new Object[] {"name-value"});
         writer.write(null, f);
       }
     } finally {
@@ -164,7 +164,7 @@ public class GeoJSONFeatureWriterTest extends JavaSparkTest {
     try {
       writer.initialize(outputFileName, conf);
       for (Geometry geom : geometries) {
-        Feature f = new Feature(geom, null, null, new Object[] {null, "field-value"});
+        Feature f = Feature.create(geom, null, null, new Object[] {null, "field-value"});
         writer.write(null, f);
       }
     } finally {
@@ -243,7 +243,7 @@ public class GeoJSONFeatureWriterTest extends JavaSparkTest {
     try {
       writer.initialize(outputFileName, conf);
       for (Geometry geom : geometries) {
-        Feature f = new Feature(geom, new String[] {"name"}, null, new Object[] {"name-value"});
+        Feature f = Feature.create(geom, new String[] {"name"}, null, new Object[] {"name-value"});
         writer.write(null, f);
       }
     } finally {

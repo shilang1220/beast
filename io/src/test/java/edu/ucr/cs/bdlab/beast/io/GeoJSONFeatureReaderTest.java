@@ -203,7 +203,7 @@ public class GeoJSONFeatureReaderTest extends JavaSparkTest {
     int numPoints = 10000;
     Random random = new Random(0);
     PointND p = new PointND(new GeometryFactory(), 2);
-    Feature f = new Feature(p);
+    Feature f = Feature.create(null, p);
     for (int $i = 0; $i < numPoints; $i++) {
       p.setCoordinate(0, random.nextDouble());
       p.setCoordinate(1, random.nextDouble());

@@ -15,15 +15,31 @@
  */
 package edu.ucr.cs.bdlab.beast.synopses
 
-import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
-
 import com.fasterxml.jackson.core.JsonGenerator
 import edu.ucr.cs.bdlab.beast.cg.SpatialDataTypes.{JavaSpatialRDD, SpatialRDD}
 import edu.ucr.cs.bdlab.beast.geolite._
-import edu.ucr.cs.bdlab.beast.cg.CGOperationsMixin._
-import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{FutureAction, SparkContext}
 import org.locationtech.jts.geom.Geometry
 
+import java.io.{Externalizable, IOException, ObjectInput, ObjectOutput}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{CanAwait, ExecutionContext, Future}
+import scala.util.Try
+
+/**
+ * A fixed-size summary for a set of features. It includes the following aggregate values:
+ *  - *size*: The estimated size of all features in bytes
+ *  - *numFeatures*: Total number of features, i.e., records.
+ *  - *numPoints*: The sum of number of points for all geometries in features.
+ *  - *numNonEmptyGeometries*: Number of features with non-empty geometries
+ *  - *sumSideLength*: The sum of all size lengths of all non-empty geometries. Can be combined with
+ *    `numNonEmptyGeometries` to compute the average size per record.
+ *  - *geometryType*: The geometry type of all non-empty geometries. This is the least inclusive type of all
+ *    geometries. For example, if all geometries are points, the geometry type will be point. If it contains a mix
+ *    of points and multi-points, a multipoint type is returned. If it contains a mix of points and polygons,
+ *    a GeometryCollection type is used.
+ */
 class Summary extends EnvelopeNDLite with Externalizable {
 
   /** Total estimated storage size for the features */
@@ -283,14 +299,17 @@ object Summary {
     jsonGenerator.writeEndObject() // End of root object
   }
 
-
   /**
-   * Compute the summary of a set of features with a custom function for estimating the size of a features
+   * Compute partial summaries for the given [[SpatialRDD]].
+   * It returns a set of Summaries in an RDD that can be combined to produce the final summary.
+   * Typically, it returns one summary per partition in the input. If the number of partitions is
+   * larger than 1,000, they are further coalesced into 1,000 partitions to reduce memory requirement
+   * for a subsequent reduce action.
    * @param features the set of features to summarize
-   * @param sizeFunction a function that returns the size for each features
-   * @return the summary of the input features
+   * @param sizeFunction the function used to estimate the size of each feature
+   * @return an RDD of summaries
    */
-  def computeForFeatures(features: SpatialRDD, sizeFunction: IFeature => Int = f => f.getStorageSize) : Summary = {
+  private def computePartialSummaries(features: SpatialRDD, sizeFunction: IFeature => Int = f => f.getStorageSize): RDD[Summary] = {
     var partialSummaries = features.mapPartitions(iFeatures => {
       val summary = new Summary
       while (iFeatures.hasNext) {
@@ -303,8 +322,95 @@ object Summary {
     })
     // If the number of partitions is very large, Spark would fail because it will try to collect all
     // the partial summaries locally and would run out of memory in such case
-    if (partialSummaries.getNumPartitions < 1000)
+    if (partialSummaries.getNumPartitions > 1000)
       partialSummaries = partialSummaries.coalesce(1000)
+    partialSummaries
+  }
+
+  /**
+   * Compute summary for features asynchronously
+   * @param features the features to compute for
+   * @param sizeFunction the size function to use
+   * @return a future action for the summary
+   */
+  def computeForFeaturesAsync(features: SpatialRDD, sizeFunction: IFeature => Int = f => f.getStorageSize)
+      : FutureAction[Summary] = {
+    val partialSummaries: RDD[Summary] = computePartialSummaries(features, sizeFunction)
+    val partialSummariesAsync: FutureAction[Seq[Summary]] = partialSummaries.collectAsync()
+    new FutureAction[Summary] {
+      var _finalResult: Summary = _
+      private def getResult(theresult: Seq[Summary]): Summary = {
+        if (_finalResult == null)
+          _finalResult = theresult.reduce((mbr1, mbr2) => mbr1.expandToSummary(mbr2))
+        _finalResult
+      }
+
+      override def cancel(): Unit = partialSummariesAsync.cancel()
+
+      override def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
+        partialSummariesAsync.ready(atMost)
+        this
+      }
+
+      override def result(atMost: Duration)(implicit permit: CanAwait): Summary = {
+        val theResult: Seq[Summary] = partialSummariesAsync.result(atMost)
+        if (theResult == null)
+          return null
+        getResult(theResult)
+      }
+
+      override def onComplete[U](func: Try[Summary] => U)(implicit executor: ExecutionContext): Unit = {
+        partialSummariesAsync.onComplete(tryTheResult => {
+          val theResult = tryTheResult.get
+          val finalResult = getResult(theResult)
+          func.apply(Try.apply(finalResult))
+        })
+      }
+
+      override def isCompleted: Boolean = partialSummariesAsync.isCompleted
+
+      override def isCancelled: Boolean = partialSummariesAsync.isCompleted
+
+      override def value: Option[Try[Summary]] = {
+        if (_finalResult != null)
+          Option(Try.apply(_finalResult))
+        else if (!partialSummariesAsync.isCompleted)
+          Option.empty[Try[Summary]]
+        else {
+          val theResult: Seq[Summary] = partialSummariesAsync.value.get.get
+          Option(Try.apply(getResult(theResult)))
+        }
+
+      }
+
+      override def jobIds: Seq[Int] = partialSummariesAsync.jobIds
+
+      override def transform[S](f: Try[Summary] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
+        partialSummariesAsync.transform(tryTheResult => {
+          val theResult = tryTheResult.get
+          val finalResult = getResult(theResult)
+          f.apply(Try.apply(finalResult))
+        })
+      }
+
+      override def transformWith[S](f: Try[Summary] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
+        partialSummariesAsync.transformWith(tryTheResult => {
+          val theResult = tryTheResult.get
+          val finalResult = getResult(theResult)
+          f.apply(Try.apply(finalResult))
+        })
+      }
+    }
+  }
+
+  /**
+   * Compute the summary of a set of features with a custom function for estimating the size of a features
+   * @param features the set of features to summarize
+   * @param sizeFunction a function that returns the size for each features
+   * @return the summary of the input features
+   */
+  def computeForFeatures(features: SpatialRDD, sizeFunction: IFeature => Int = f => f.getStorageSize) : Summary = {
+    val partialSummaries: RDD[Summary] = computePartialSummaries(features, sizeFunction)
     partialSummaries.reduce((mbr1, mbr2) => mbr1.expandToSummary(mbr2))
   }
 

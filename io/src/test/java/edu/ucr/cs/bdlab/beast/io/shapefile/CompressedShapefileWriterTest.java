@@ -41,7 +41,7 @@ public class CompressedShapefileWriterTest extends JavaSparkTest {
     Feature[] features = new Feature[numEntries];
     Random random = new Random(0);
     for (int i = 0; i < numEntries; i++)
-      features[i] = new Feature(factory.createPoint(new CoordinateXY(random.nextFloat(), random.nextFloat())));
+      features[i] = Feature.create(null, factory.createPoint(new CoordinateXY(random.nextFloat(), random.nextFloat())));
 
     Configuration conf = sparkContext().hadoopConfiguration();
     Path outPath = new Path(scratchPath(), "test.zip");
@@ -70,7 +70,7 @@ public class CompressedShapefileWriterTest extends JavaSparkTest {
     Feature[] features = new Feature[numEntries];
     Random random = new Random(0);
     for (int i = 0; i < numEntries; i++)
-      features[i] = new Feature(factory.createPoint(new CoordinateXY(random.nextFloat(), random.nextFloat())));
+      features[i] = Feature.create(null, factory.createPoint(new CoordinateXY(random.nextFloat(), random.nextFloat())));
 
     Configuration conf = sparkContext().hadoopConfiguration();
     conf.setLong(CompressedShapefileWriter.PartSize, 1000);

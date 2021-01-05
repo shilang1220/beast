@@ -16,10 +16,11 @@
 package edu.ucr.cs.bdlab.beast.generator
 
 import edu.ucr.cs.bdlab.beast.common.BeastOptions
-import edu.ucr.cs.bdlab.beast.geolite.{EnvelopeND, GeometryType, IFeature}
+import edu.ucr.cs.bdlab.beast.geolite.{EnvelopeND, IFeature}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{Partition, SparkContext, TaskContext}
 
+// A cheap way to create an enumeration in Scala
 trait DistributionType extends Serializable
 object UniformDistribution extends DistributionType
 object DiagonalDistribution extends DistributionType
@@ -45,21 +46,24 @@ case class RandomSpatialPartition(index: Int, cardinality: Long,
  * @param sc the [[SparkContext]] associated with this RDD
  * @param distribution the distribution of the generated data
  * @param cardinality the number of records to generate
+ * @param numPartitions the number of partitions to generate. If set to zero, it will be inferred based on size
  * @param opts additional options for the generated data
  */
 class RandomSpatialRDD(sc: SparkContext, distribution: DistributionType, cardinality: Long,
+                       numPartitions: Int = 0,
                        opts: BeastOptions = new BeastOptions())
   extends RDD[IFeature](sc, Seq()) {
   val _partitions: Array[Partition] = {
     val numRecordsPerPartition = opts.getLong(SpatialGenerator.RecordsPerPartition, 1000000)
     val seed: Long = opts.getLong(SpatialGenerator.Seed, System.currentTimeMillis())
     val dimensions: Int = opts.getInt(SpatialGenerator.Dimensions, 2)
-    val numPartitions: Int = ((cardinality + numRecordsPerPartition - 1) / numRecordsPerPartition).toInt
+    val finalNumPartitions: Int = if (numPartitions != 0) numPartitions
+                else ((cardinality + numRecordsPerPartition - 1) / numRecordsPerPartition).toInt
     if (distribution != ParcelDistribution) {
-      val _partitions = new Array[Partition](numPartitions)
+      val _partitions = new Array[Partition](finalNumPartitions)
       var recordsRemaining = cardinality
       for (iPartition <- _partitions.indices) {
-        val partitionCardinality = recordsRemaining / (numPartitions - iPartition)
+        val partitionCardinality = recordsRemaining / (finalNumPartitions - iPartition)
         _partitions(iPartition) = RandomSpatialPartition(iPartition, partitionCardinality, dimensions,
           seed + iPartition, opts)
         recordsRemaining -= partitionCardinality
@@ -70,12 +74,12 @@ class RandomSpatialRDD(sc: SparkContext, distribution: DistributionType, cardina
 
       // Generate the partitions using the parcel generator but set dithering to zero since dithering should
       // only be applied on the final records and not the partitions
-      val partitionBoxes = new ParcelGenerator(RandomSpatialPartition(0, numPartitions,
+      val partitionBoxes = new ParcelGenerator(RandomSpatialPartition(0, finalNumPartitions,
         dimensions, seed, new BeastOptions(opts).setInt("dither", 0)))
       var recordsRemaining = cardinality
       partitionBoxes.zipWithIndex.map(pi => {
         val (partition, iPartition) = pi
-        val partitionCardinality = recordsRemaining / (numPartitions - iPartition)
+        val partitionCardinality = recordsRemaining / (finalNumPartitions - iPartition)
         recordsRemaining -= partitionCardinality
         // Adjust the affine matrix of this partition so that it will generate records within the partition boundaries
         // There is no need to change the other parameters (dither and split range) since they are ratios
@@ -93,6 +97,12 @@ class RandomSpatialRDD(sc: SparkContext, distribution: DistributionType, cardina
 
   override protected def getPartitions: Array[Partition] = _partitions
 
+  /**
+   * Returns an iterator to the generated data in the given partition
+   * @param split the partition to return its data. Must be of type [[RandomSpatialPartition]]
+   * @param context the Spark task context
+   * @return an iterator to the generated data
+   */
   override def compute(split: Partition, context: TaskContext): Iterator[IFeature] = {
     distribution match {
       case UniformDistribution => new UniformGenerator(split.asInstanceOf[RandomSpatialPartition])
@@ -101,7 +111,6 @@ class RandomSpatialRDD(sc: SparkContext, distribution: DistributionType, cardina
       case BitDistribution => new BitGenerator(split.asInstanceOf[RandomSpatialPartition])
       case SierpinskiDistribution => new SierpinskiGenerator(split.asInstanceOf[RandomSpatialPartition])
       case ParcelDistribution => new ParcelGenerator(split.asInstanceOf[RandomSpatialPartition])
-      case _ => ???
     }
   }
 }

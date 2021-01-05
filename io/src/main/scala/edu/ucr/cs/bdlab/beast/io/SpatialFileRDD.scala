@@ -71,7 +71,6 @@ class SpatialFileRDD(@transient sc: SparkContext, path: String, opts: BeastOptio
     split.asInstanceOf[SpatialFilePartition].locations
 }
 
-// SpatialRDD的同名对象
 object SpatialFileRDD extends IConfigurable with Logging {
   /**
    * A spatial partition points to part of a file and might contain spatial information about it

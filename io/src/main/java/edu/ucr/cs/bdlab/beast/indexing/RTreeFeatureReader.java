@@ -286,6 +286,6 @@ public class RTreeFeatureReader extends FeatureReader {
     }
     // Read the geometry
     Geometry geometry = reader.parse(in);
-    return new Feature(geometry, header == null? null : header._2, header == null? null : header._1, values);
+    return Feature.create(geometry, header == null? null : header._2, header == null? null : header._1, values);
   }
 }

@@ -72,8 +72,8 @@ public class MultilevelPyramidPlotHelperTest extends JavaSparkTest {
     histogram.addPoint(new double[] {0.5, 0.5}, 100);
     histogram.addPoint(new double[] {3.5, 2.5}, 100);
     List<IFeature> features = new ArrayList<>();
-    features.add(new Feature(new PointND(new GeometryFactory(), 2, 0.5, 0.5)));
-    features.add(new Feature(new PointND(new GeometryFactory(), 2, 3.5, 2.5)));
+    features.add(Feature.create(null, new PointND(new GeometryFactory(), 2, 0.5, 0.5)));
+    features.add(Feature.create(null, new PointND(new GeometryFactory(), 2, 3.5, 2.5)));
     SubPyramid subPyramid = new SubPyramid(inputMBR, 0, 2, 0, 0, 4, 4);
     PyramidPartitioner fullPyramid = new PyramidPartitioner(subPyramid);
     GeometricPlotter plotter = new GeometricPlotter();
@@ -89,8 +89,8 @@ public class MultilevelPyramidPlotHelperTest extends JavaSparkTest {
     EnvelopeNDLite inputMBR = new EnvelopeNDLite(2, 0.0, 0.0, 4.0, 4.0);
     List<IFeature> features = new ArrayList<>();
     WKTReader reader = new WKTReader();
-    features.add(new Feature(new EnvelopeND(new GeometryFactory(), 2, 0.5, 0.5, 3.5, 3.5)));
-    features.add(new Feature((reader.read("POLYGON((0.1 0.1, 7.8 0.2, 10.0 10.0, -5.0 7.0, 0.1 0.1))"))));
+    features.add(Feature.create(null, new EnvelopeND(new GeometryFactory(), 2, 0.5, 0.5, 3.5, 3.5)));
+    features.add(Feature.create(null, (reader.read("POLYGON((0.1 0.1, 7.8 0.2, 10.0 10.0, -5.0 7.0, 0.1 0.1))"))));
     SubPyramid subPyramid = new SubPyramid(inputMBR, 0, 2);
     PyramidPartitioner fullPyramid = new PyramidPartitioner(subPyramid);
     GeometricPlotter plotter = new GeometricPlotter();
@@ -108,8 +108,8 @@ public class MultilevelPyramidPlotHelperTest extends JavaSparkTest {
     histogram.addPoint(new double[] {0.5, 0.5}, 100);
     histogram.addPoint(new double[] {3.5, 2.5}, 100);
     List<IFeature> features = new ArrayList<>();
-    features.add(new Feature(new PointND(new GeometryFactory(), 2, 0.5, 0.5)));
-    features.add(new Feature(new PointND(new GeometryFactory(), 2, 3.5, 2.5)));
+    features.add(Feature.create(null, new PointND(new GeometryFactory(), 2, 0.5, 0.5)));
+    features.add(Feature.create(null, new PointND(new GeometryFactory(), 2, 3.5, 2.5)));
     SubPyramid subPyramid = new SubPyramid(inputMBR, 0, 2, 0, 0, 4, 4);
     PyramidPartitioner imageTilePartitioner = new PyramidPartitioner(subPyramid, histogram, 150, MultilevelPyramidPlotHelper.TileClass.ImageTile);
     GeometricPlotter plotter = new GeometricPlotter();

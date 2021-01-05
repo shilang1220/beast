@@ -39,10 +39,10 @@ public class RTreeFeatureWriterTest extends JavaSparkTest {
 
   public void testWrite() throws IOException, InterruptedException {
     IFeature features[] = {
-        new Feature(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
-        new Feature(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
-        new Feature(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
-        new Feature(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
+        Feature.create(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
+        Feature.create(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
+        Feature.create(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
+        Feature.create(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
     };
 
     RTreeFeatureWriter writer = new RTreeFeatureWriter();
@@ -75,10 +75,10 @@ public class RTreeFeatureWriterTest extends JavaSparkTest {
 
   public void testWriteWithEmptyGeometries() throws IOException {
     IFeature features[] = {
-        new Feature(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
-        new Feature(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
-        new Feature(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
-        new Feature(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
+        Feature.create(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
+        Feature.create(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
+        Feature.create(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
+        Feature.create(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
     };
 
     RTreeFeatureWriter writer = new RTreeFeatureWriter();
@@ -103,10 +103,10 @@ public class RTreeFeatureWriterTest extends JavaSparkTest {
 
   public void testEstimateSize() throws IOException {
     IFeature features[] = {
-        new Feature(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
-        new Feature(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
-        new Feature(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
-        new Feature(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
+        Feature.create(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
+        Feature.create(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
+        Feature.create(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
+        Feature.create(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
     };
 
     RTreeFeatureWriter writer = new RTreeFeatureWriter();
@@ -124,10 +124,10 @@ public class RTreeFeatureWriterTest extends JavaSparkTest {
   public void testWriteWithCRS() throws IOException, InterruptedException {
     geometryFactory = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 3857);
     IFeature features[] = {
-        new Feature(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
-        new Feature(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
-        new Feature(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
-        new Feature(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
+        Feature.create(new PointND(geometryFactory, 1.0, 2.4), null, null, new String[] {"abc", "def"}),
+        Feature.create(new PointND(geometryFactory, 3.0, 4.4), null, null, new String[] {"abcc", "deff"}),
+        Feature.create(new PointND(geometryFactory, 5.0, 6.4), null, null, new String[] {"abbc", "deef"}),
+        Feature.create(new PointND(geometryFactory, 7.0, 8.4), null, null, new String[] {"aabc", "ddef"}),
     };
 
     RTreeFeatureWriter writer = new RTreeFeatureWriter();
@@ -153,7 +153,7 @@ public class RTreeFeatureWriterTest extends JavaSparkTest {
     Random rand = new Random(0);
     IFeature features[] = new IFeature[numRecords];
     for (int i = 0; i < numRecords; i++)
-      features[i] = new Feature(new PointND(geometryFactory, rand.nextDouble(), rand.nextDouble()));
+      features[i] = Feature.create(null, new PointND(geometryFactory, rand.nextDouble(), rand.nextDouble()));
 
     RTreeFeatureWriter writer = new RTreeFeatureWriter();
     Path rtreePath = new Path(scratchPath(), "test.rtree");

@@ -78,7 +78,7 @@ public class GeometricPlotterTest extends TestCase {
         0.5, 0.0,
         0.4, 0.5,
         0.5, 0.5))});
-    boolean changed = plotter.plot(canvas, new Feature(poly));
+    boolean changed = plotter.plot(canvas, Feature.create(null, poly));
     assertTrue(changed);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -115,7 +115,7 @@ public class GeometricPlotterTest extends TestCase {
             2.9, 2.9,
             0.0, 3.0,
             0.0, 0.0));
-    boolean changed = plotter.plot(canvas, new Feature(poly));
+    boolean changed = plotter.plot(canvas, Feature.create(null, poly));
     assertTrue(changed);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -144,7 +144,7 @@ public class GeometricPlotterTest extends TestCase {
             4.9, 4.9,
             0.0, 5.0,
             0.0, 0.0));
-    boolean changed = plotter.plot(canvas, new Feature(poly));
+    boolean changed = plotter.plot(canvas, Feature.create(null, poly));
     assertTrue(changed);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -179,7 +179,7 @@ public class GeometricPlotterTest extends TestCase {
             2.0, 2.0,
             1.0, 2.0,
             1.0, 1.0));
-    boolean changed = plotter.plot(canvas, new Feature(poly));
+    boolean changed = plotter.plot(canvas, Feature.create(null, poly));
     assertTrue(changed);
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -206,7 +206,7 @@ public class GeometricPlotterTest extends TestCase {
         0.1, 0.1,
         0.2, 0.98,
         0.99, 0.99));
-    plotter.plot(canvas, new Feature(linestring));
+    plotter.plot(canvas, Feature.create(null, linestring));
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
@@ -236,7 +236,7 @@ public class GeometricPlotterTest extends TestCase {
         0.99, 0.99,
         0.02, 0.98,
         0.01, 0.01))});
-    plotter.plot(canvas, new Feature(poly));
+    plotter.plot(canvas, Feature.create(null, poly));
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
@@ -264,7 +264,7 @@ public class GeometricPlotterTest extends TestCase {
     int imageSize = 100;
     plotter.setup(opts);
     Canvas canvas = plotter.createCanvas(imageSize, imageSize, mbr, 0);
-    plotter.plot(canvas, new Feature(linestring));
+    plotter.plot(canvas, Feature.create(null, linestring));
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
@@ -293,7 +293,7 @@ public class GeometricPlotterTest extends TestCase {
         1.2, 1.2,
         0.1, 1.2,
         0.1, 0.1));
-    plotter.plot(canvas, new Feature(linestring));
+    plotter.plot(canvas, Feature.create(null, linestring));
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
     plotter.writeImage(canvas, dos, false);
@@ -322,7 +322,7 @@ public class GeometricPlotterTest extends TestCase {
         0.0, 0.5,
         0.0001, 0.5,
         0.0, 0.0))});
-    plotter.plot(canvas1, new Feature(poly));
+    plotter.plot(canvas1, Feature.create(null, poly));
 
     Canvas canvas2 = plotter.createCanvas(100, 100, mbr, 0);
     poly = factory.createMultiPolygon(new Polygon[] {createPolygonJTS(createCoordinateSequence(
@@ -330,7 +330,7 @@ public class GeometricPlotterTest extends TestCase {
         0.5, 0.0,
         0.50001, 0.0,
         0.5, 0.5))});
-    plotter.plot(canvas2, new Feature(poly));
+    plotter.plot(canvas2, Feature.create(null, poly));
 
     plotter.merge(canvas1, canvas2);
 
@@ -374,7 +374,7 @@ public class GeometricPlotterTest extends TestCase {
     CoordinateSequence ring2 = factory.getCoordinateSequenceFactory().create(coords.toArray(new Coordinate[0]));
     MultiPolygon poly = factory.createMultiPolygon(new Polygon[] {createPolygonJTS(ring1, ring2)});
 
-    plotter.plot(canvas, new Feature(poly));
+    plotter.plot(canvas, Feature.create(null, poly));
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
@@ -509,11 +509,11 @@ public class GeometricPlotterTest extends TestCase {
     plotter.setup(opts);
 
     Canvas canvas = plotter.createCanvas(100, 100, mbr, 0);
-    plotter.plot(canvas, new Feature(new PointND(new GeometryFactory(), 2, 0.0, 100.0)));
-    plotter.plot(canvas, new Feature(new PointND(new GeometryFactory(), 2, 2.0, 102.0)));
-    plotter.plot(canvas, new Feature(new PointND(new GeometryFactory(), 2, 50.0, 150.0)));
-    plotter.plot(canvas, new Feature(new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
-    plotter.plot(canvas, new Feature(new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
+    plotter.plot(canvas, Feature.create(null, new PointND(new GeometryFactory(), 2, 0.0, 100.0)));
+    plotter.plot(canvas, Feature.create(null, new PointND(new GeometryFactory(), 2, 2.0, 102.0)));
+    plotter.plot(canvas, Feature.create(null, new PointND(new GeometryFactory(), 2, 50.0, 150.0)));
+    plotter.plot(canvas, Feature.create(null, new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
+    plotter.plot(canvas, Feature.create(null, new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
 
     BufferedImage img = getImage(plotter, canvas);
     assertEquals(100, img.getWidth());
@@ -543,11 +543,11 @@ public class GeometricPlotterTest extends TestCase {
 
     Canvas canvas1 = plotter.createCanvas(100, 100, mbr, 0);
     Canvas canvas2 = plotter.createCanvas(100, 100, mbr, 0);
-    plotter.plot(canvas1, new Feature(new PointND(new GeometryFactory(), 2, 0.0, 100.0)));
-    plotter.plot(canvas2, new Feature(new PointND(new GeometryFactory(), 2, 2.0, 102.0)));
-    plotter.plot(canvas2, new Feature(new PointND(new GeometryFactory(), 2, 50.0, 150.0)));
-    plotter.plot(canvas1, new Feature(new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
-    plotter.plot(canvas2, new Feature(new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
+    plotter.plot(canvas1, Feature.create(null, new PointND(new GeometryFactory(), 2, 0.0, 100.0)));
+    plotter.plot(canvas2, Feature.create(null, new PointND(new GeometryFactory(), 2, 2.0, 102.0)));
+    plotter.plot(canvas2, Feature.create(null, new PointND(new GeometryFactory(), 2, 50.0, 150.0)));
+    plotter.plot(canvas1, Feature.create(null, new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
+    plotter.plot(canvas2, Feature.create(null, new PointND(new GeometryFactory(), 2, 20.0, 120.0)));
 
     plotter.merge(canvas1, canvas2);
 

@@ -304,7 +304,6 @@ public class MultilevelPyramidPlotHelper {
     EnvelopeNDLite shapeMBR = null;
     Envelope tileMBR = new Envelope();
 
-    LongArray overlappingTiles = new LongArray();
     TileIndex tileIndex = new TileIndex();
 
     Map<Long, CanvasModified> tempTiles = new HashMap<>();
@@ -317,7 +316,7 @@ public class MultilevelPyramidPlotHelper {
       }
       shapeMBR.merge(feature.getGeometry());
 
-      partitioner.overlapPartitions(shapeMBR, overlappingTiles);
+      long[] overlappingTiles = partitioner.overlapPartitions(shapeMBR);
       for (long tileID : overlappingTiles) {
         CanvasModified c = tempTiles.get(tileID);
         if (c == null) {

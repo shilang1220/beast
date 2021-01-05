@@ -46,7 +46,7 @@ public class ShapefileFeatureWriterTest extends JavaSparkTest {
     try {
       writer.initialize(shpFileName, conf);
       for (Geometry geom : geometries) {
-        Feature f = new Feature(geom, new String[] {"name"}, null, new Object[] {"name-value"});
+        Feature f = Feature.create(geom, new String[] {"name"}, null, new Object[] {"name-value"});
         writer.write(null, f);
       }
     } finally {

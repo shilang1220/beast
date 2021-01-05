@@ -94,7 +94,7 @@ object ZonalStatistics extends CLIOperation {
         Array[Any](statistics.sum.mkString(","), statistics.count.mkString(","),
           statistics.min.mkString(","), statistics.max.mkString(","))
 
-      new Feature(fc._1.getGeometry, values, schema)
+      Feature.create(fc._1.getGeometry, values, schema)
     })
     val oFormat = opts.getString(SpatialOutputFormat.OutputFormat, opts.getString(SpatialFileRDD.InputFormat))
     if (opts.get(CSVFeatureWriter.WriteHeader) == null)

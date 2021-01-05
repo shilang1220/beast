@@ -211,7 +211,7 @@ public class GeoJSONFeatureReader extends FeatureReader {
         eos = true;
       }
     }
-    feature = new Feature(geometry, names.toArray(new String[0]), null, values.toArray());
+    feature = Feature.create(geometry, names.toArray(new String[0]), null, values.toArray());
     return !eos;
   }
 

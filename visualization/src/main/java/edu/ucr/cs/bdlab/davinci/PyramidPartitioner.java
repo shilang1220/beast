@@ -18,7 +18,6 @@ package edu.ucr.cs.bdlab.davinci;
 import edu.ucr.cs.bdlab.beast.geolite.EnvelopeNDLite;
 import edu.ucr.cs.bdlab.beast.cg.SpatialPartitioner;
 import edu.ucr.cs.bdlab.beast.synopses.AbstractHistogram;
-import edu.ucr.cs.bdlab.beast.util.LongArray;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.locationtech.jts.geom.Envelope;
@@ -28,7 +27,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -280,19 +281,22 @@ public class PyramidPartitioner implements Externalizable {
    * Clears the array {@code matchedTiles} and fills it with tile IDs that overlap the given MBR in the configured
    * subPyramid.
    * @param mbr the MBR to calculate the overlaps for
-   * @param matchedTiles (output) the list of matched partition IDs
    */
-  public void overlapPartitions(EnvelopeNDLite mbr, LongArray matchedTiles) {
-    matchedTiles.clear();
+  public long[] overlapPartitions(EnvelopeNDLite mbr) {
     if (mbr.isEmpty())
-      return;
+      return new long[0];
+    List<Long> matchedTiles = new ArrayList<>();
     if (buffer == 0.0) {
       // Compute the overlaps with the base (deepest) level of the pyramid
       Rectangle overlaps = new Rectangle();
       pyramid.getOverlappingTiles(mbr, overlaps);
       // Handle the case when the MBR does not overlap any tiles at all
-      if (overlaps.width <= 0 || overlaps.height <= 0)
-        return;
+      if (overlaps.width <= 0 || overlaps.height <= 0) {
+        long[] finalResults = new long[matchedTiles.size()];
+        for (int i = 0; i < matchedTiles.size(); i++)
+          finalResults[i] = matchedTiles.get(i);
+        return finalResults;
+      }
 
       // Start at the deepest level and cover k=granularity levels at a time until reaching the minimum level
       int z2 = pyramid.getMaximumLevel() + 1;
@@ -335,6 +339,10 @@ public class PyramidPartitioner implements Externalizable {
         z2 = z1;
       } while (z2 > pyramid.getMinimumLevel());
     }
+    long[] finalResults = new long[matchedTiles.size()];
+    for (int i = 0; i < matchedTiles.size(); i++)
+      finalResults[i] = matchedTiles.get(i);
+    return finalResults;
   }
 
   /**

@@ -1,14 +1,9 @@
 package edu.ucr.cs.bdlab.raptor;
 
-import com.sun.media.imageio.plugins.tiff.GeoTIFFTagSet;
 import edu.ucr.cs.bdlab.beast.io.tiff.AbstractIFDEntry;
 import edu.ucr.cs.bdlab.beast.io.tiff.IFDEntry;
 import edu.ucr.cs.bdlab.beast.io.tiff.ITiffReader;
 import edu.ucr.cs.bdlab.beast.io.tiff.Raster;
-import org.geotools.coverage.grid.io.imageio.geotiff.GeoKeyEntry;
-import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffConstants;
-import org.geotools.coverage.grid.io.imageio.geotiff.PixelScale;
-import org.geotools.coverage.grid.io.imageio.geotiff.TiePoint;
 
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
@@ -46,6 +41,7 @@ public class GeoTiffMetadata {
     private final double noData;
 
     private final AffineTransform modelTransformation;
+    public static final int TAG_GEO_KEY_DIRECTORY = 34735;
 
     public GeoTiffMetadata(ITiffReader reader , Raster raster) throws IOException {
         this.reader = reader;
@@ -53,7 +49,7 @@ public class GeoTiffMetadata {
         geoKeys = new HashMap<>();
 
         // 1. Get value associated with GeoKeyDirectoryTag.
-        AbstractIFDEntry entry = raster.getEntry((short) GeoTIFFTagSet.TAG_GEO_KEY_DIRECTORY);
+        AbstractIFDEntry entry = raster.getEntry((short) TAG_GEO_KEY_DIRECTORY);
         if(entry != null)
         {
             // Get No of keys indexed by GeoKeyDirectory.
@@ -87,9 +83,10 @@ public class GeoTiffMetadata {
         tiePoints = calculateTiePoints();
         noData = calculateNoData();
     }
+    public static final int TIFFTAG_NODATA = 42113;
 
     private double calculateNoData() throws IOException {
-        AbstractIFDEntry entry = raster.getEntry((short) GeoTiffConstants.TIFFTAG_NODATA);
+        AbstractIFDEntry entry = raster.getEntry((short) TIFFTAG_NODATA);
         if (entry != null) {
             ByteBuffer buffer = reader.readEntry(entry,null);
             String noData = getTiffAscii(buffer,-1,-1);
@@ -106,6 +103,7 @@ public class GeoTiffMetadata {
 
         return Double.NaN;
     }
+    public static final int TAG_MODEL_TRANSFORMATION = 34264;
 
     /**
      * Gets the model tie points from the appropriate TIFFField
@@ -115,7 +113,7 @@ public class GeoTiffMetadata {
      * @return the transformation, or null if not found
      */
     private AffineTransform calculateModelTransformation() throws IOException {
-        AbstractIFDEntry entry = raster.getEntry((short) GeoTIFFTagSet.TAG_MODEL_TRANSFORMATION);
+        AbstractIFDEntry entry = raster.getEntry((short) TAG_MODEL_TRANSFORMATION);
         if (entry != null) {
             double[] modelTransformation = new double[16]; // max possible variable in the tag
             ByteBuffer buffer = reader.readEntry(entry,null);
@@ -138,9 +136,10 @@ public class GeoTiffMetadata {
         }
         return null;
     }
+    public static final int TAG_MODEL_TIE_POINT = 33922;
 
     private TiePoint[] calculateTiePoints() throws IOException {
-        AbstractIFDEntry entry = raster.getEntry((short) GeoTIFFTagSet.TAG_MODEL_TIE_POINT);
+        AbstractIFDEntry entry = raster.getEntry((short) TAG_MODEL_TIE_POINT);
         if (entry != null) {
             // Translate point
             ByteBuffer buffer = reader.readEntry(entry, null);
@@ -161,9 +160,10 @@ public class GeoTiffMetadata {
         }
         return null;
     }
+    public static final int TAG_MODEL_PIXEL_SCALE = 33550;
 
     private PixelScale calculatePixelScales() throws IOException {
-        AbstractIFDEntry entry = raster.getEntry((short) GeoTIFFTagSet.TAG_MODEL_PIXEL_SCALE);
+        AbstractIFDEntry entry = raster.getEntry((short) TAG_MODEL_PIXEL_SCALE);
         if (entry != null) {
             // Scale point
             ByteBuffer buffer = reader.readEntry(entry, null);
@@ -343,8 +343,7 @@ public class GeoTiffMetadata {
     }
 
     /**
-     * Tells me if the underlying metdata contains ModelTiepointTag tag for {@link
-     * org.geotools.coverage.grid.io.imageio.geotiff.TiePoint}.
+     * Tells me if the underlying metdata contains ModelTiepointTag tag for {@link TiePoint}.
      *
      * @return true if ModelTiepointTag is present, false otherwise.
      */
@@ -363,8 +362,7 @@ public class GeoTiffMetadata {
     }
 
     /**
-     * Tells me if the underlying metadata contains ModelTiepointTag tag for {@link
-     * org.geotools.coverage.grid.io.imageio.geotiff.TiePoint}.
+     * Tells me if the underlying metadata contains ModelTiepointTag tag for {@link TiePoint}.
      *
      * @return true if ModelTiepointTag is present, false otherwise.
      */

@@ -28,12 +28,12 @@ class PlaneSweepSpatialJoinIteratorTest extends FunSuite with ScalaSparkTest {
   test("touching geometries") {
     val factory = GeometryReader.DefaultGeometryFactory
     val s1 = Array(
-      new Feature(factory.toGeometry(new Envelope(0, 1, 0, 1))),
-      new Feature(factory.toGeometry(new Envelope(1, 2, 0, 1)))
+      Feature.create(null, factory.toGeometry(new Envelope(0, 1, 0, 1))),
+      Feature.create(null, factory.toGeometry(new Envelope(1, 2, 0, 1)))
     )
     val s2 = Array(
-      new Feature(factory.toGeometry(new Envelope(0, 1, 0.5, 1))),
-      new Feature(factory.toGeometry(new Envelope(1, 2, 0.5, 1)))
+      Feature.create(null, factory.toGeometry(new Envelope(0, 1, 0.5, 1))),
+      Feature.create(null, factory.toGeometry(new Envelope(1, 2, 0.5, 1)))
     )
     val joinResults = new PlaneSweepSpatialJoinIterator(s1, s2, null)
     assert(joinResults.size == 4)

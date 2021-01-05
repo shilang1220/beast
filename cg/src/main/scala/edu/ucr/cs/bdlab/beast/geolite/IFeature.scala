@@ -86,12 +86,14 @@ trait IFeature extends Serializable with Row {
   def getStorageSize: Int = {
     var size: Int = 0
     for (i <- 0 until length) {
-      schema(i).dataType match {
-        case StringType => size += getAs[String](i).length
-        case IntegerType => size += 4
-        case LongType | DoubleType | TimestampType => size += 8
-        case BooleanType => size += 1
-        case GeometryDataType => size += GeometryHelper.getGeometryStorageSize(getAs[Geometry](i))
+      if (!isNullAt(i)) {
+        schema(i).dataType match {
+          case StringType => size += getAs[String](i).length
+          case IntegerType => size += 4
+          case LongType | DoubleType | TimestampType => size += 8
+          case BooleanType => size += 1
+          case GeometryDataType => size += GeometryHelper.getGeometryStorageSize(getAs[Geometry](i))
+        }
       }
     }
     size

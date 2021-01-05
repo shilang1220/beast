@@ -37,7 +37,7 @@ import java.util.List;
 
 /**
  * An abstract class that handles basic web requests. A setup function can be optionally configured to
- * setup the server. In addition, all methods annotated with [[WebHandler#WebRequest]] will be treated as an HTTP
+ * setup the server. In addition, all methods annotated with {@link WebMethod} will be treated as an HTTP
  * entry point.
  */
 public abstract class WebHandler {

@@ -30,7 +30,6 @@ import org.apache.spark.network.util.JavaUtils
 class BeastOptions(loadDefaults: Boolean = true)
   extends scala.collection.mutable.HashMap[String, String] with Serializable {
 
-  //如果是默认配置，则填入默认参数值
   if (loadDefaults)
     this.mergeWith(BeastOptions.defaultOptions)
 
@@ -183,7 +182,7 @@ class BeastOptions(loadDefaults: Boolean = true)
   }
 
   /**
-   * Loads configuration back from a text file that was written using [[storeToTextFile(FileSystem, Path)]]
+   * Loads configuration back from a text file that was written using [[storeToTextFile()]]
    *
    * @param fs   the file system to write in
    * @param path the path to write to
@@ -198,7 +197,7 @@ class BeastOptions(loadDefaults: Boolean = true)
 
   /**
    * Load all the options from the given properties file and add it to this options
-   * @param in
+   * @param in the input stream to read the BeastOptions from
    */
   def loadFromTextFile(in: InputStream): BeastOptions = {
     val r = new InputStreamReader(in)
@@ -326,9 +325,7 @@ object BeastOptions {
 
   lazy val defaultOptions: BeastOptions = {
     val opts = new BeastOptions(false)
-
     // Load defaults from beast.properties files
-    //从包中的默认位置读取beast.properties文件，作为系统默认参数
     val configFiles: java.util.Enumeration[URL] = getClass().getClassLoader.getResources("beast.properties")
     while (configFiles.hasMoreElements) {
       val configFile: URL = configFiles.nextElement
@@ -339,7 +336,6 @@ object BeastOptions {
       }
     }
     // Try to also load from the working directory
-    // 如果工作目录下有beast.properties文件，则从中读取系统参数
     val localfile: File = new File("beast.properties")
     if (localfile.exists && localfile.isFile) {
       val input: FileInputStream = new FileInputStream(localfile)

@@ -430,13 +430,13 @@ public class CSVFeatureReader extends FeatureReader {
           values.add(null);
         if (fieldNames == null || fieldNames.length == values.size()) {
           // Field names and values have matching sizes
-          this.feature = new Feature(geom, fieldNames, null, values.toArray());
+          this.feature = Feature.create(geom, fieldNames, null, values.toArray());
         } else {
           // Found more values on this line than the header line, append additional attribute names
           String[] extendedFieldNames = Arrays.copyOf(fieldNames, values.size());
           for (int i = fieldNames.length; i < extendedFieldNames.length; i++)
             extendedFieldNames[i] = String.format("attr%d", i);
-          this.feature = new Feature(geom, extendedFieldNames, null, values.toArray());
+          this.feature = Feature.create(geom, extendedFieldNames, null, values.toArray());
         }
         return true;
       }

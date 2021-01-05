@@ -16,12 +16,11 @@ public class PyramidPartitionerTest extends TestCase {
     SubPyramid pyramid = new SubPyramid(mbr, 1, 2, 1, 2, 3, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid);
     assertEquals(pyramid.getTotalNumberOfTiles(), pp.getPartitionCount());
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4), matchedPartitions);
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4));
     List<TileIndex> expectedTiles = new ArrayList<>();
     expectedTiles.add(new TileIndex(2,2,2));
     expectedTiles.add(new TileIndex(1,1,1));
-    assertEquals(expectedTiles.size(), matchedPartitions.size());
+    assertEquals(expectedTiles.size(), matchedPartitions.length);
     for (long tileID : matchedPartitions) {
       TileIndex ti = new TileIndex();
       TileIndex.decode(tileID, ti);
@@ -34,11 +33,10 @@ public class PyramidPartitionerTest extends TestCase {
     EnvelopeNDLite mbr = new EnvelopeNDLite(2, 0.0, 0.0, 2.0, 2.0);
     SubPyramid pyramid = new SubPyramid(mbr, 1, 2, 1, 2, 3, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid);
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4), matchedPartitions);
-    assertEquals(2, matchedPartitions.size());
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4), matchedPartitions);
-    assertEquals(2, matchedPartitions.size());
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4));
+    assertEquals(2, matchedPartitions.length);
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4));
+    assertEquals(2, matchedPartitions.length);
   }
 
   public void testPartitionDataTilesWithHistogram() {
@@ -49,11 +47,10 @@ public class PyramidPartitionerTest extends TestCase {
     SubPyramid pyramid = new SubPyramid(mbr, 1, 2, 1, 2, 3, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid, new Prefix2DHistogram(h), 7, MultilevelPyramidPlotHelper.TileClass.DataTile);
     assertEquals(pyramid.getTotalNumberOfTiles(), pp.getPartitionCount());
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4), matchedPartitions);
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4));
     List<TileIndex> expectedTiles = new ArrayList<>();
     expectedTiles.add(new TileIndex(2,2,2));
-    assertEquals(expectedTiles.size(), matchedPartitions.size());
+    assertEquals(expectedTiles.size(), matchedPartitions.length);
     for (long tileID : matchedPartitions) {
       TileIndex ti = new TileIndex();
       TileIndex.decode(tileID, ti);
@@ -70,11 +67,10 @@ public class PyramidPartitionerTest extends TestCase {
     SubPyramid pyramid = new SubPyramid(mbr, 1, 2, 1, 2, 3, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid, new Prefix2DHistogram(h), 7, MultilevelPyramidPlotHelper.TileClass.ImageTile);
     assertEquals(pyramid.getTotalNumberOfTiles(), pp.getPartitionCount());
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4), matchedPartitions);
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.1, 1.4, 1.4));
     List<TileIndex> expectedTiles = new ArrayList<>();
     expectedTiles.add(new TileIndex(1,1,1));
-    assertEquals(expectedTiles.size(), matchedPartitions.size());
+    assertEquals(expectedTiles.size(), matchedPartitions.length);
     for (long tileID : matchedPartitions) {
       TileIndex ti = new TileIndex();
       TileIndex.decode(tileID, ti);
@@ -90,12 +86,11 @@ public class PyramidPartitionerTest extends TestCase {
     h.addEntry(new int[] {3, 2}, 5);
     SubPyramid pyramid = new SubPyramid(mbr, 0, 2, 0, 0, 4, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid, new Prefix2DHistogram(h), 7, 15);
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.2, 1.9, 1.3), matchedPartitions);
+    long[] matchedPartitions=pp.overlapPartitions(new EnvelopeNDLite(2, 1.1, 1.2, 1.9, 1.3));
     List<TileIndex> expectedTiles = new ArrayList<>();
     expectedTiles.add(new TileIndex(1,1,1));
     expectedTiles.add(new TileIndex(0,0,0));
-    assertEquals(expectedTiles.size(), matchedPartitions.size());
+    assertEquals(expectedTiles.size(), matchedPartitions.length);
     for (long tileID : matchedPartitions) {
       TileIndex ti = new TileIndex();
       TileIndex.decode(tileID, ti);
@@ -111,10 +106,9 @@ public class PyramidPartitionerTest extends TestCase {
     h.addEntry(new int[] {3, 2}, 5);
     SubPyramid pyramid = new SubPyramid(mbr, 0, 2, 0, 0, 4, 4);
     PyramidPartitioner pp = new PyramidPartitioner(pyramid, new Prefix2DHistogram(h), 7, 15);
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-        Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY), matchedPartitions);
-    assertEquals(0, matchedPartitions.size());
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
+        Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+    assertEquals(0, matchedPartitions.length);
   }
 
   public void testFullPartitionWithGranularity() {
@@ -123,11 +117,11 @@ public class PyramidPartitionerTest extends TestCase {
     PyramidPartitioner pp = new PyramidPartitioner(pyramid);
     pp.setGranularity(3);
     assertEquals(1 + 16 +1024 + 65536, pp.getPartitionCount());
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 1024.0, 1.0 / 1024.0), matchedPartitions);
-    assertEquals(4, matchedPartitions.size());
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 512.0, 1.0 / 512.0), matchedPartitions);
-    assertEquals(4, matchedPartitions.size());
+
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 1024.0, 1.0 / 1024.0));
+    assertEquals(4, matchedPartitions.length);
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 512.0, 1.0 / 512.0));
+    assertEquals(4, matchedPartitions.length);
   }
 
   public void testSizeBasedPartitioningWithGranularity() {
@@ -141,24 +135,23 @@ public class PyramidPartitionerTest extends TestCase {
     // This will only assign to the top level
     pp.setGranularity(3);
     assertEquals(1, pp.getPartitionCount());
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 1024.0, 1.0 / 1024.0), matchedPartitions);
-    assertEquals(1, matchedPartitions.size());
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0 / 1024.0, 1.0 / 1024.0));
+    assertEquals(1, matchedPartitions.length);
 
     // Reduce the granularity to 2 to test levels 0 and 1
     pp.setGranularity(2);
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(2, matchedPartitions.size());
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(2, matchedPartitions.length);
 
     pp.minThreshold = 150;
     pp.maxThreshold = 250;
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(1, matchedPartitions.size());
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(1, matchedPartitions.length);
 
     pp.minThreshold = 250;
     pp.maxThreshold = 350;
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(1, matchedPartitions.size());
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(1, matchedPartitions.length);
   }
 
   public void testTileClassBasedPartitioningWithGranularity() {
@@ -171,18 +164,17 @@ public class PyramidPartitionerTest extends TestCase {
     PyramidPartitioner pp = new PyramidPartitioner(pyramid, h, 150, MultilevelPyramidPlotHelper.TileClass.ImageTile);
     // This will only assign to the top level
     pp.setGranularity(3);
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(1, matchedPartitions.size());
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(1, matchedPartitions.length);
 
     // Reduce the granularity to 2 to test levels 0 and 1
     pp.setGranularity(2);
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(2, matchedPartitions.size());
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(2, matchedPartitions.length);
 
     pp.tileToConsider = MultilevelPyramidPlotHelper.TileClass.DataTile;
-    pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0), matchedPartitions);
-    assertEquals(2, matchedPartitions.size());
+    matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 0.0, 0.0, 1.0, 1.0));
+    assertEquals(2, matchedPartitions.length);
   }
 
   public void testPartitionWithBuffer() {
@@ -191,14 +183,13 @@ public class PyramidPartitionerTest extends TestCase {
     PyramidPartitioner pp = new PyramidPartitioner(pyramid);
     // Set buffer size to approximately one pixel assuming a 256x256 tile
     pp.setBuffer(1 / 256.0);
-    LongArray matchedPartitions = new LongArray();
-    pp.overlapPartitions(new EnvelopeNDLite(2, 257.0, 1.0, 511.0, 255.0), matchedPartitions);
+    long[] matchedPartitions = pp.overlapPartitions(new EnvelopeNDLite(2, 257.0, 1.0, 511.0, 255.0));
     List<TileIndex> expectedTiles = new ArrayList<>();
     expectedTiles.add(new TileIndex(2,1,0));
     expectedTiles.add(new TileIndex(1,0,0));
     expectedTiles.add(new TileIndex(1,1,0));
     expectedTiles.add(new TileIndex(0,0,0));
-    assertEquals(expectedTiles.size(), matchedPartitions.size());
+    assertEquals(expectedTiles.size(), matchedPartitions.length);
     for (long tileID : matchedPartitions) {
       TileIndex ti = new TileIndex();
       TileIndex.decode(tileID, ti);

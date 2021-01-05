@@ -15,17 +15,14 @@
  */
 package edu.ucr.cs.bdlab.beast.util
 
-import edu.ucr.cs.bdlab.beast.common.BeastOptions
-
-import java.io.{ByteArrayOutputStream, OutputStream, PrintStream}
-import java.util
-import java.util.{List, Map}
 import org.apache.hadoop.io.IOUtils.NullOutputStream
 import org.apache.spark.test.ScalaSparkTest
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
+import java.io.{ByteArrayOutputStream, PrintStream}
+import java.util
 import scala.collection.immutable.Range
 
 @RunWith(classOf[JUnitRunner])
@@ -69,6 +66,15 @@ class OperationHelperTest extends FunSuite with ScalaSparkTest {
     assert(parsed.options.getString("option4[1]") == "true")
   }
 
+  test("Allow dash in the middle of a parameter name") {
+    val parsed = OperationHelper.parseCommandLineArguments("test", "path1",
+      "option1:value1", "-no-option-3", "-option-4", "file-name:abc")
+    assert(parsed.inputs.length + parsed.outputs.length == 1)
+    assert(parsed.options.getString("option1") == "value1")
+    assert(!parsed.options.getBoolean("option-3", true))
+    assert(parsed.options.getBoolean("option-4", false))
+    assert(parsed.options.getString("file-name") == "abc")
+  }
   test("Check user options") {
     // Unexpected parameters
     val commandLineOptions = OperationHelper.parseCommandLineArguments("test", "path1",

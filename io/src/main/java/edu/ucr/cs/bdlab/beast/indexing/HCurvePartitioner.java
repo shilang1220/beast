@@ -67,7 +67,6 @@ public class HCurvePartitioner implements SpatialPartitioner {
     final int numDimensions = sample.length;
     int sampleCount = sample[0].length;
     assert numPartitions > 0;
-
     if (numPartitions > 1) {
       // Sort all the points based on a Z-curve
       hCurveSorter = new HCurveSortable(summary);
@@ -78,7 +77,6 @@ public class HCurvePartitioner implements SpatialPartitioner {
       int numSplits = numPartitions - 1;
       // We reserve an additional coordinate to use with the overlapPartition method for efficiency
       splitPoints = new double[numDimensions][numSplits + 1];
-
       // Store the split points
       for (int i = 0; i < numSplits; i++) {
         int splitPoint = sampleCount * (i + 1) / numPartitions;

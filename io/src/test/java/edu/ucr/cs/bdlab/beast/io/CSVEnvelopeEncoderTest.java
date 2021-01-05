@@ -9,7 +9,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 public class CSVEnvelopeEncoderTest extends JavaSparkTest {
 
   public void testEncode2DEnvelope() {
-    IFeature feature = new Feature(
+    IFeature feature = Feature.create(
         new EnvelopeND(new GeometryFactory(),2, 1.0, 2.0, 5.0, 3.0),
         null, null,
         new Object[] {"abc", "def"}

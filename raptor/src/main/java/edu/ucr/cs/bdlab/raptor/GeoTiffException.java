@@ -1,9 +1,5 @@
 package edu.ucr.cs.bdlab.raptor;
 
-import org.geotools.coverage.grid.io.imageio.geotiff.GeoKeyEntry;
-import org.geotools.coverage.grid.io.imageio.geotiff.PixelScale;
-import org.geotools.coverage.grid.io.imageio.geotiff.TiePoint;
-
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.io.PrintWriter;

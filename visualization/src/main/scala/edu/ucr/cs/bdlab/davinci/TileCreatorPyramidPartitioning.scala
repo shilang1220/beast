@@ -58,7 +58,6 @@ class TileCreatorPyramidPartitioning(sortedFeatures: Iterator[(Long, IFeature)],
       // Create some objects to reuse for all features
       val shapeMBR = new EnvelopeNDLite(2)
       val tileMBR = new Envelope()
-      val overlappingTiles = new LongArray
       val partitionedTileIndex = new TileIndex
       val tempTiles = new mutable.HashMap[Long, CanvasModified]
       // Process all records in the current batch
@@ -71,9 +70,9 @@ class TileCreatorPyramidPartitioning(sortedFeatures: Iterator[(Long, IFeature)],
         shapeMBR.setEmpty()
         shapeMBR.merge(feature.getGeometry)
         // Find all overlapping tiles
-        subPartitioner.overlapPartitions(shapeMBR, overlappingTiles)
+        val overlappingTiles = subPartitioner.overlapPartitions(shapeMBR)
         for (i <- 0 until overlappingTiles.size) {
-          val overlappingTileID: Long = overlappingTiles.get(i)
+          val overlappingTileID: Long = overlappingTiles(i)
 
           val c: CanvasModified = tempTiles.getOrElseUpdate(overlappingTileID, {
             // First time to encounter this tile, create the corresponding canvas

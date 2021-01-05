@@ -164,7 +164,7 @@ class GPXReader extends FeatureReader with Logging {
       if (currentTrackName != null) currentTrackName else null,
       if (currentSegmentNumber != -1) currentSegmentNumber else null
     )
-    new Feature(
+    Feature.create(
       FeatureReader.DefaultGeometryFactory.createPoint(new CoordinateXY(longitude, latitude)),
       GPXReader.fieldNames,
       GPXReader.fieldTypes,

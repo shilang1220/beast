@@ -90,6 +90,7 @@ public class GeometryReader {
     geometryTypeDimension &= ~WKBConstants.wkbIncludeSRID;
     int geometryType = geometryTypeDimension % 1000;
     int dimensionMarker = geometryTypeDimension - geometryType;
+    boolean usePointND = false;
     int dimension;
     boolean measure;
     switch (dimensionMarker) {
@@ -112,13 +113,14 @@ public class GeometryReader {
       default:
         dimension = dimensionMarker / 1000 - 3;
         measure = false;
+        usePointND = true;
         break;
     }
     switch (geometryType) {
       case WKBConstants.wkbEmpty:
         return EmptyGeometry.instance;
       case WKBConstants.wkbPoint:
-        return parsePoint(dataIn, dimension, measure);
+        return parsePoint(dataIn, dimension, measure, usePointND);
       case WKBConstants.wkbEnvelope:
         return parseEnvelope(dataIn, dimension);
       case WKBConstants.wkbLineString:
@@ -138,7 +140,7 @@ public class GeometryReader {
     }
   }
 
-  protected Geometry parsePoint(DataInput dataIn, int dimension, boolean measure) throws IOException {
+  protected Geometry parsePoint(DataInput dataIn, int dimension, boolean measure, boolean usePointND) throws IOException {
     double[] coordinates = new double[dimension];
     double m = Double.NaN;
     boolean allNan = true;
@@ -159,7 +161,7 @@ public class GeometryReader {
     // Due to a bug in some spatial operations, we always add a measure dimension even if we don't use it
     // See https://github.com/locationtech/jts/issues/434
     // See https://github.com/locationtech/jts/issues/597
-    if (dimension <= 3) {
+    if (!usePointND && dimension <= 3) {
       CoordinateSequence cs = geometryFactory.getCoordinateSequenceFactory().create(1, dimension  + 1, 1);
       for (int d = 0; d < dimension; d++)
         cs.setOrdinate(0, d, coordinates[d]);

@@ -41,11 +41,12 @@ trait IndexMixin {
      * @param numPartitions the desired number of partitions. If not set, the number of partitions of the input RDD is used.
      * @return a new RDD that is partitioned using the given partitioner class
      */
-    def partitionBy(partitionerKlass: Class[_ <: SpatialPartitioner], numPartitions: Int = rdd.getNumPartitions): PartitionedSpatialRDD = {
+    def partitionBy(partitionerKlass: Class[_ <: SpatialPartitioner], numPartitions: Int = rdd.getNumPartitions,
+                    opts: BeastOptions = new BeastOptions()): PartitionedSpatialRDD = {
       val partitioner = IndexHelper.createPartitioner(rdd, partitionerKlass,
         NumPartitions(IndexHelper.Fixed, numPartitions),
         _ => 1,
-        new BeastOptions()
+        opts
       )
       IndexHelper.partitionFeatures(rdd, partitioner)
     }

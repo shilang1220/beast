@@ -34,22 +34,32 @@ class GeneratorTest extends FunSuite with ScalaSparkTest {
 
   test("Generate multiple partitions") {
     val randomPoints: SpatialRDD = new RandomSpatialRDD(sparkContext, UniformDistribution, 100,
-      SpatialGenerator.RecordsPerPartition -> "53")
+      opts = SpatialGenerator.RecordsPerPartition -> "53")
     assert(randomPoints.getNumPartitions == 2)
     assert(randomPoints.count() == 100)
     assert(randomPoints.first().getGeometry.getGeometryType == "Point")
   }
 
+  test("Manually specify number of partitions") {
+    val randomPoints: SpatialRDD = new RandomSpatialRDD(sparkContext, UniformDistribution, 100,
+      numPartitions = 2)
+    assert(randomPoints.getNumPartitions == 2)
+    assert(randomPoints.count() == 100)
+    val counts = randomPoints.mapPartitions(features => Some(features.length).iterator).collect()
+    assert(counts(0) == 50)
+    assert(counts(1) == 50)
+  }
+
   test("Generate boxes") {
     val randomPoints: SpatialRDD = new RandomSpatialRDD(sparkContext, UniformDistribution, 100,
-      Seq(PointBasedGenerator.GeometryType -> "box", PointBasedGenerator.MaxSize -> "0.2,0.1"))
+      opts = Seq(PointBasedGenerator.GeometryType -> "box", PointBasedGenerator.MaxSize -> "0.2,0.1"))
     assert(randomPoints.count() == 100)
     assert(randomPoints.first().getGeometry.getGeometryType == "Envelope")
   }
 
   test("Generate points with transformation") {
     val randomPoints: SpatialRDD = new RandomSpatialRDD(sparkContext, UniformDistribution, 100,
-      SpatialGenerator.AffineMatrix -> "1,0,0,2,1,2")
+      opts = SpatialGenerator.AffineMatrix -> "1,0,0,2,1,2")
     assert(randomPoints.count() == 100)
     val mbr = randomPoints.summary
     assert(new EnvelopeNDLite(2, 1.0, 2.0, 2.0, 4.0).containsEnvelope(mbr))
@@ -57,7 +67,7 @@ class GeneratorTest extends FunSuite with ScalaSparkTest {
 
   test("Generate boxes with transformation") {
     val randomPoints: SpatialRDD = new RandomSpatialRDD(sparkContext, UniformDistribution, 100,
-      Seq(PointBasedGenerator.GeometryType -> "box",
+      opts = Seq(PointBasedGenerator.GeometryType -> "box",
         PointBasedGenerator.MaxSize -> "0.0,0.0",
         SpatialGenerator.AffineMatrix -> "1,0,0,2,1,2")
     )
@@ -68,7 +78,7 @@ class GeneratorTest extends FunSuite with ScalaSparkTest {
 
   test("Generate parcel one partition") {
     val randomBoxes: SpatialRDD = new RandomSpatialRDD(sparkContext, ParcelDistribution, 100,
-      Seq(ParcelGenerator.Dither -> "0.2", ParcelGenerator.SplitRange -> "0.4")
+      opts = Seq(ParcelGenerator.Dither -> "0.2", ParcelGenerator.SplitRange -> "0.4")
     )
     assert(randomBoxes.count() == 100)
     val mbr = randomBoxes.summary
@@ -81,7 +91,7 @@ class GeneratorTest extends FunSuite with ScalaSparkTest {
 
   test("Generate parcel multiple partition") {
     val randomBoxes: SpatialRDD = new RandomSpatialRDD(sparkContext, ParcelDistribution, 100,
-      Seq(ParcelGenerator.Dither -> "0.2", ParcelGenerator.SplitRange -> "0.4",
+      opts = Seq(ParcelGenerator.Dither -> "0.2", ParcelGenerator.SplitRange -> "0.4",
         SpatialGenerator.RecordsPerPartition -> "53")
     )
     assert(randomBoxes.getNumPartitions == 2)

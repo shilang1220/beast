@@ -266,7 +266,7 @@ public class ShapefileFeatureReader extends FeatureReader {
         throw new RuntimeException(String.format("Could not reach record #%d in the DBF file", shapefileReader.iShape));
     }
     Geometry geometry = shapefileReader.getCurrentValue();
-    this.currentValue = new Feature(dbfReader.getCurrentValue(), geometry);
+    this.currentValue = Feature.create(dbfReader.getCurrentValue(), geometry);
     return true;
   }
 

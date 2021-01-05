@@ -177,7 +177,7 @@ public class SingleLevelPlotHelper {
                   geometry = Reprojector.reprojectGeometry(geometry, transformationInfo);
                 }
                 if (geometry != feature.getGeometry())
-                  feature = new Feature(feature, geometry);
+                  feature = Feature.create(feature, geometry);
               }
               if (!feature.getGeometry().isEmpty())
                 plotter.plot(partialCanvas, feature);

@@ -70,7 +70,7 @@ object SpatialReader extends Logging {
       while (line.getLength > 0) {
         values = values :+ CSVFeatureReader.deleteAttribute(line, fieldSeparator, 0, quoteCharacters)
       }
-      new Feature(geometry, null, null, values)
+      Feature.create(geometry, null, null, values)
     }
   }
 
@@ -131,7 +131,7 @@ object SpatialReader extends Logging {
       var values = Array[Any]()
       while (line.getLength > 0)
         values = values :+ CSVFeatureReader.deleteAttribute(line, fieldSeparator, 0, quoteCharacters)
-      new Feature(p, (1 to values.length).map(i => s"$$attr$i").toArray, null, values)
+      Feature.create(p, (1 to values.length).map(i => s"$$attr$i").toArray, null, values)
     }
   }
 

@@ -15,19 +15,23 @@
  */
 package edu.ucr.cs.bdlab.beast.geolite
 
+import org.apache.spark.beast.sql.GeometryDataType
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types._
 import org.apache.spark.test.ScalaSparkTest
 import org.junit.runner.RunWith
 import org.locationtech.jts.geom.Geometry
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+
 @RunWith(classOf[JUnitRunner])
 class FeatureTest extends FunSuite with ScalaSparkTest {
 
   test("geometry in middle") {
-    val feature = new Feature(Row.apply(123.25, "name",
-      new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0), "name2"))
+    val feature = Feature.create(Row.apply(123.25, "name",
+      new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0), "name2"), null)
     assert(feature.iGeom == 2)
     assert(feature.getNumAttributes == 3)
     assert(feature.getAs[Double](0) == 123.25)
@@ -37,7 +41,7 @@ class FeatureTest extends FunSuite with ScalaSparkTest {
   }
 
   test("create from a row without geometry") {
-    val feature = new Feature(
+    val feature = Feature.create(
       Row.apply(123.25, "name"),
       new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0))
     assert(feature.iGeom == 0)
@@ -48,7 +52,7 @@ class FeatureTest extends FunSuite with ScalaSparkTest {
   }
 
   test("create from a row with geometry") {
-    val feature = new Feature(
+    val feature = Feature.create(
       Row.apply(123.25, "name", new PointND(GeometryReader.DefaultGeometryFactory, 2, 5.0, 6.0)),
       new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0))
     assert(feature.iGeom == 2)
@@ -56,5 +60,41 @@ class FeatureTest extends FunSuite with ScalaSparkTest {
     assert(feature.getAs[Double](0) == 123.25)
     assert(feature.getAs[String](1) == "name")
     assert(feature.getAs[Geometry](2) == new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0))
+  }
+
+  test("getGeometrySize with null values") {
+    val feature = Feature.create(Row.apply(123.25, "name",
+      new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0), "name2", null), null)
+    // Just test that it will not throw an exception
+    assert(feature.getStorageSize > 0)
+  }
+
+  test("default constructor") {
+    // Test the default constructor to ensure correct serialization/deserialization
+    try {
+      val feature = new Feature()
+    } catch {
+      case e: Throwable => fail("Exception was thrown", e)
+    }
+  }
+
+  test("serialization/deserialization") {
+    // Test the default constructor to ensure correct serialization/deserialization
+    val feature = new Feature(Array(123.25, "name",
+      new PointND(GeometryReader.DefaultGeometryFactory, 2, 0.0, 1.0), "name2", null),
+      StructType(Seq(
+        StructField("value", DoubleType),  StructField("key", StringType),
+        StructField("g", GeometryDataType),
+        StructField("name", StringType), StructField("value", IntegerType))
+      ))
+    val baos = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(baos)
+    oos.writeObject(feature)
+    oos.close()
+
+    // Read it back
+    val readFeature: IFeature = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray)).readObject().asInstanceOf[IFeature]
+
+    assert(feature.equals(readFeature))
   }
 }

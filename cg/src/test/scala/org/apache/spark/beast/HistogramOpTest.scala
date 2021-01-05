@@ -29,8 +29,8 @@ import org.scalatest.junit.JUnitRunner
 class HistogramOpTest extends FunSuite with ScalaSparkTest {
   test("Compute a sparse histogram") {
     val points: SpatialRDD = sparkContext.parallelize(Array(
-      new Feature(new PointND(new GeometryFactory, 2, 1.0, 1.0)),
-      new Feature(new PointND(new GeometryFactory, 2, 3.0, 3.0))))
+      Feature.create(null, new PointND(new GeometryFactory, 2, 1.0, 1.0)),
+      Feature.create(null, new PointND(new GeometryFactory, 2, 3.0, 3.0))))
     val mbr = points.summary
     val h: UniformHistogram = HistogramOP.computePointHistogramSparse(points, _=>1, mbr, 4)
     assert(2 == h.getNumPartitions(0))
@@ -42,9 +42,9 @@ class HistogramOpTest extends FunSuite with ScalaSparkTest {
 
   test("Compute a sparse histogram with out-of-bound points") {
     val points: SpatialRDD = sparkContext.parallelize(Array(
-      new Feature(new PointND(new GeometryFactory, 2, 1.0, 1.0)),
-      new Feature(new PointND(new GeometryFactory, 2, 3.0, 3.0)),
-      new Feature(new PointND(new GeometryFactory, 2, 5.0, 5.0)),
+      Feature.create(null, new PointND(new GeometryFactory, 2, 1.0, 1.0)),
+      Feature.create(null, new PointND(new GeometryFactory, 2, 3.0, 3.0)),
+      Feature.create(null, new PointND(new GeometryFactory, 2, 5.0, 5.0)),
     ))
     val mbr = new EnvelopeNDLite(2, 1.0, 1.0, 3.0, 3.0)
     val h: UniformHistogram = HistogramOP.computePointHistogramSparse(points, _=>1, mbr, 4)

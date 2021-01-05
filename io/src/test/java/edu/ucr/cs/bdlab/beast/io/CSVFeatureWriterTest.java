@@ -23,7 +23,7 @@ public class CSVFeatureWriterTest extends JavaSparkTest {
     CSVFeatureWriter writer = new CSVFeatureWriter();
     writer.initialize(csvPath, conf);
     PointND p = new PointND(new GeometryFactory(), 2, 0.1, 0.3);
-    Feature f = new Feature(p, new String[] {"att1", "att2"}, null, new Object[] {"abc", "def"});
+    Feature f = Feature.create(p, new String[] {"att1", "att2"}, null, new Object[] {"abc", "def"});
 
     writer.write(null, f);
     writer.close(null);
@@ -42,7 +42,7 @@ public class CSVFeatureWriterTest extends JavaSparkTest {
     CSVFeatureWriter writer = new CSVFeatureWriter();
     writer.initialize(csvPath, conf);
     PointND p = new PointND(new GeometryFactory(), 2, 0.1, 0.3);
-    Feature f = new Feature(p, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
+    Feature f = Feature.create(p, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
 
     writer.write(null, f);
     writer.close(null);
@@ -62,7 +62,7 @@ public class CSVFeatureWriterTest extends JavaSparkTest {
     CSVFeatureWriter writer = new CSVFeatureWriter();
     writer.initialize(csvPath, conf);
     PointND p = new PointND(new GeometryFactory(), 2, 0.1, 0.3);
-    Feature f = new Feature(p, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
+    Feature f = Feature.create(p, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
 
     writer.write(null, f);
     writer.close(null);
@@ -83,7 +83,7 @@ public class CSVFeatureWriterTest extends JavaSparkTest {
     CSVFeatureWriter writer = new CSVFeatureWriter();
     writer.initialize(csvPath, conf);
     EnvelopeND e = new EnvelopeND(new GeometryFactory(), 2, 0.1, 0.3, 0.5, 0.8);
-    Feature f = new Feature(e, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
+    Feature f = Feature.create(e, new String[] {"name", "value"}, null, new Object[] {"abc", "def"});
 
     writer.write(null, f);
     writer.close(null);
@@ -111,7 +111,7 @@ public class CSVFeatureWriterTest extends JavaSparkTest {
     t2.clear();
     t2.set(2020, 9, 18, 11, 30);
 
-    Feature f = new Feature(p, new String[] {"date", "datetime"}, null, new Object[] {t1, t2});
+    Feature f = Feature.create(p, new String[] {"date", "datetime"}, null, new Object[] {t1, t2});
     writer.write(null, f);
     writer.close(null);
 

@@ -9,7 +9,7 @@ public class CSVWKTEncoderTest extends JavaSparkTest {
 
   public void testEncodePointWithAttributes() {
     PointND p = new PointND(new GeometryFactory(), 2, 0.5, 0.1);
-    Feature f = new Feature(p, null, null, new Object[] {"att1", "att2", "att3", "att4"});
+    Feature f = Feature.create(p, null, null, new Object[] {"att1", "att2", "att3", "att4"});
     char fieldSeparator = ',';
     CSVWKTEncoder writer = new CSVWKTEncoder(fieldSeparator, 1);
     String s = writer.apply(f, null).toString();

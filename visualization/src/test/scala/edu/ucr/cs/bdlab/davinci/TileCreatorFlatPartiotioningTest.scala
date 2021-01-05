@@ -19,12 +19,12 @@ class TileCreatorFlatPartiotioningTest extends FunSuite with ScalaSparkTest {
   test("Simple Create") {
     val mbr = new EnvelopeNDLite(2, 0, 0, 4, 4)
     val features = Array(
-      (TileIndex.encode(0, 0, 0), new Feature(new PointND(new GeometryFactory, 2, 0, 0))),
-      (TileIndex.encode(1, 0, 0), new Feature(new PointND(new GeometryFactory, 2, 0, 0))),
-      (TileIndex.encode(2, 0, 0), new Feature(new PointND(new GeometryFactory, 2, 0, 0))),
-      (TileIndex.encode(0, 0, 0), new Feature(new PointND(new GeometryFactory, 2, 3.5, 3.5))),
-      (TileIndex.encode(1, 1, 1), new Feature(new PointND(new GeometryFactory, 2, 3.5, 3.5))),
-      (TileIndex.encode(2, 3, 3), new Feature(new PointND(new GeometryFactory, 2, 3.5, 3.5))),
+      (TileIndex.encode(0, 0, 0), Feature.create(null, new PointND(new GeometryFactory, 2, 0, 0))),
+      (TileIndex.encode(1, 0, 0), Feature.create(null, new PointND(new GeometryFactory, 2, 0, 0))),
+      (TileIndex.encode(2, 0, 0), Feature.create(null, new PointND(new GeometryFactory, 2, 0, 0))),
+      (TileIndex.encode(0, 0, 0), Feature.create(null, new PointND(new GeometryFactory, 2, 3.5, 3.5))),
+      (TileIndex.encode(1, 1, 1), Feature.create(null, new PointND(new GeometryFactory, 2, 3.5, 3.5))),
+      (TileIndex.encode(2, 3, 3), Feature.create(null, new PointND(new GeometryFactory, 2, 3.5, 3.5))),
     )
     val plotter = new GeometricPlotter
     plotter.setup(new BeastOptions())
@@ -36,7 +36,7 @@ class TileCreatorFlatPartiotioningTest extends FunSuite with ScalaSparkTest {
     val mbr = new EnvelopeNDLite(2, 0, 0, 1024, 1024)
     val features = new Array[(Long, Feature)](1000)
     for (i <- features.indices) {
-      features(i) = (TileIndex.encode(10, i, i), new Feature(new PointND(new GeometryFactory, 2, i, i)))
+      features(i) = (TileIndex.encode(10, i, i), Feature.create(null, new PointND(new GeometryFactory, 2, i, i)))
     }
     val plotter = new GeometricPlotter
     plotter.setup(new BeastOptions())

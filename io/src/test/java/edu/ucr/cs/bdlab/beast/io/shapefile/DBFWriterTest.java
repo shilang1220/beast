@@ -71,7 +71,7 @@ public class DBFWriterTest extends JavaSparkTest {
 
   public void testShouldWriteFeaturesWithoutNames() throws IOException {
     // A sample feature
-    Feature f = new Feature(null, null, null, new Object[]{"abc", "def"});
+    Feature f = Feature.create(null, null, null, new Object[]{"abc", "def"});
 
     DBFWriter dbfWriter = new DBFWriter();
     Path dbfPath = new Path(scratchPath(), "test.dbf");
@@ -108,7 +108,7 @@ public class DBFWriterTest extends JavaSparkTest {
     GregorianCalendar date = new GregorianCalendar(Feature.UTC());
     date.clear();
     date.set(2019, 9, 9);
-    Feature f = new Feature(
+    Feature f = Feature.create(
         null,
         new String[]{"key1", "key2", "key3", "key4", "key5", "key6", "key7", "key8", "key9"},
         null,
@@ -143,7 +143,7 @@ public class DBFWriterTest extends JavaSparkTest {
     Path dbfPath = new Path(scratchPath(), "output.dbf");
     Configuration conf = new Configuration();
     // Create a DBF file with one feature that has all the possible types
-    Feature f = new Feature(null, new String[]{"key1", "key2", "key3"},
+    Feature f = Feature.create(null, new String[]{"key1", "key2", "key3"},
         null, new Object[]{-123, Integer.MIN_VALUE, Long.MAX_VALUE});
     try {
       dbfWriter.initialize(dbfPath, conf);
@@ -174,7 +174,7 @@ public class DBFWriterTest extends JavaSparkTest {
     Path dbfPath = new Path(scratchPath(), "output.dbf");
     Configuration conf = new Configuration();
     // Create a DBF file with one feature that has all the possible types
-    Feature f = new Feature(null,
+    Feature f = Feature.create(null,
         new String[] {"key1", "key2", "key3", "key4", "key5", "key6"},
         new FieldType[]{
             FieldType.BooleanType, FieldType.IntegerType, FieldType.LongType,

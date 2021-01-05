@@ -120,7 +120,7 @@ trait CGOperationsMixin {
       val transform: TransformationInfo = Reprojector.findTransformationInfo(sourceCRS, targetCRS, rdd.sparkContext.getConf)
       rdd.map(f => {
         val transformedGeometry = Reprojector.reprojectGeometry(f.getGeometry, transform)
-        new Feature(f, transformedGeometry)
+        Feature.create(f, transformedGeometry)
       })
     }
 

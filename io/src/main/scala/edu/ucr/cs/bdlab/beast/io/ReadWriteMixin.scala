@@ -135,8 +135,9 @@ trait ReadWriteMixin {
      * @return an RDD with the generated geometries
      */
     def generateSpatialData(distribution: DistributionType, cardinality: Long,
+                            numPartitions: Int = 0,
                             opts: BeastOptions = new BeastOptions) : SpatialRDD =
-      new RandomSpatialRDD(sc, distribution, cardinality, opts)
+      new RandomSpatialRDD(sc, distribution, cardinality, numPartitions, opts)
   }
 
 

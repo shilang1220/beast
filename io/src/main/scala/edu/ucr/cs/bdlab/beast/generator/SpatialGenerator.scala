@@ -73,7 +73,7 @@ abstract class SpatialGenerator(partition: RandomSpatialPartition)
     assert(geometry != null)
     if (affineMatrix != null)
       geometry = affineTransform(geometry)
-    new Feature(geometry)
+    Feature.create(null, geometry)
   }
 
   /**

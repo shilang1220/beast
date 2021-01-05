@@ -25,7 +25,7 @@ class RaptorJoinTest extends FunSuite with ScalaSparkTest {
   test("RaptorJoinZS") {
     val rasterFile = makeFileCopy("/raptor/glc2000_small.tif").getPath
     val testPoly = factory.toGeometry(new Envelope(-82.76, -80.25, 31.91, 35.17))
-    val vector: RDD[(Long, IFeature)] = sparkContext.parallelize(Seq((1L, new Feature(testPoly))))
+    val vector: RDD[(Long, IFeature)] = sparkContext.parallelize(Seq((1L, Feature.create(null, testPoly))))
     val rasters: Array[String] = Array(rasterFile)
 
     val values: RDD[(Long, Int, Int, Int, Float)] = RaptorJoin.raptorJoin(rasters, vector, new BeastOptions())
@@ -40,7 +40,7 @@ class RaptorJoinTest extends FunSuite with ScalaSparkTest {
   test("EmptyResult") {
     val rasterFile = makeFileCopy("/raptor/glc2000_small.tif").getPath
     val testPoly = factory.createPolygon()
-    val vector: RDD[(Long, IFeature)] = sparkContext.parallelize(Seq((1L, new Feature(testPoly))))
+    val vector: RDD[(Long, IFeature)] = sparkContext.parallelize(Seq((1L, Feature.create(null, testPoly))))
     val rasters: Array[String] = Array(rasterFile)
 
     val values: RDD[(Long, Int, Int, Int, Float)] = RaptorJoin.raptorJoin(rasters, vector, new BeastOptions())

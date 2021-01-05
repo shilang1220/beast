@@ -32,10 +32,10 @@ class IndexHelperTest extends FunSuite with ScalaSparkTest {
   test("partition features from Java") {
     val geometryFactor: GeometryFactory = FeatureReader.DefaultGeometryFactory
     val features = sparkContext.parallelize(Seq[IFeature](
-      new Feature(new PointND(geometryFactor, 2, 0, 0)),
-      new Feature(new PointND(geometryFactor, 2, 1, 1)),
-      new Feature(new PointND(geometryFactor, 2, 3, 1)),
-      new Feature(new PointND(geometryFactor, 2, 1, 4)),
+      Feature.create(null, new PointND(geometryFactor, 2, 0, 0)),
+      Feature.create(null, new PointND(geometryFactor, 2, 1, 1)),
+      Feature.create(null, new PointND(geometryFactor, 2, 3, 1)),
+      Feature.create(null, new PointND(geometryFactor, 2, 1, 4)),
     ))
     val partitionedFeatures: JavaPartitionedSpatialRDD =
       IndexHelper.partitionFeatures(JavaRDD.fromRDD(features), classOf[RSGrovePartitioner],

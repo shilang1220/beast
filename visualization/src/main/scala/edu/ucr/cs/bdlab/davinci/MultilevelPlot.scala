@@ -34,7 +34,7 @@ import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.geotools.referencing.crs.DefaultGeographicCRS
-import org.locationtech.jts.geom.{Geometry, TopologyException}
+import org.locationtech.jts.geom.Geometry
 
 import java.io.IOException
 import scala.collection.mutable.ArrayBuffer
@@ -125,11 +125,11 @@ Can be specified as a range min..max (inclusive of both) or as a single number w
             if (CommonVisualizationHelper.MercatorMapBoundariesEnvelope.contains(originalGeometry.getEnvelopeInternal))
               f // Completely contained. Nothing needs to be done
             else if (CommonVisualizationHelper.MercatorMapBoundariesEnvelope.intersects(originalGeometry.getEnvelopeInternal))
-              new Feature(f, originalGeometry.intersection(CommonVisualizationHelper.MercatorMapBoundariesPolygon))
+              Feature.create(f, originalGeometry.intersection(CommonVisualizationHelper.MercatorMapBoundariesPolygon))
             else // Disjoint
-              new Feature(EmptyGeometry.instance)
+              Feature.create(null, EmptyGeometry.instance)
           } catch {
-            case _: Throwable => new Feature(EmptyGeometry.instance)
+            case _: Throwable => Feature.create(null, EmptyGeometry.instance)
           }
         })
         // Remove empty geometries
@@ -192,7 +192,7 @@ Can be specified as a range min..max (inclusive of both) or as a single number w
   @throws(classOf[IOException])
   def plotGeometries(geoms: RDD[_ <: Geometry], levels: Range, outPath: String, opts: BeastOptions): Unit = {
     // Convert geometries to features to be able to use the standard function
-    val features: SpatialRDD = geoms.map(g => new Feature(g))
+    val features: SpatialRDD = geoms.map(g => Feature.create(null, g))
 
     // Set a default output format if not set
     if (opts.get(SpatialFileRDD.InputFormat) == null && opts.get(SpatialOutputFormat.OutputFormat) == null)
@@ -304,14 +304,10 @@ Can be specified as a range min..max (inclusive of both) or as a single number w
     // Create a sub-pyramid that represents the tiles of interest
     val mbr = new EnvelopeNDLite(2)
     val partitionedFeatures: RDD[(Long, IFeature)] = features.flatMap(feature => {
-      val matchedPartitions: LongArray = new LongArray
-      val allMatches = new ArrayBuffer[(Long, IFeature)]
       mbr.setEmpty()
       mbr.merge(feature.getGeometry)
-      partitioner.overlapPartitions(mbr, matchedPartitions)
-      for (i <- 0 until matchedPartitions.size)
-        allMatches += ((matchedPartitions.get(i), feature))
-      allMatches.iterator
+      val matchedTiles: Array[Long] = partitioner.overlapPartitions(mbr)
+      matchedTiles.map(pid => (pid, feature))
     }).sortByKey()
 
     // Write the final canvas to the output
@@ -340,15 +336,10 @@ Can be specified as a range min..max (inclusive of both) or as a single number w
     // Assign each feature to all the overlapping tiles and group by tile ID
     val featuresAssignedToTiles: RDD[(Long, IFeature)] = features.flatMap(feature => {
       val mbr = new EnvelopeNDLite(2)
-      val matchedPartitions: LongArray = new LongArray()
       val allMatches: ArrayBuffer[(Long, IFeature)] = new ArrayBuffer[(Long, IFeature)]
       mbr.merge(feature.getGeometry)
-      partitionerBroadcast.value.overlapPartitions(mbr, matchedPartitions)
-      for (i <- 0 until matchedPartitions.size()) {
-        val pid: Long = matchedPartitions.get(i)
-        allMatches += ((pid, feature))
-      }
-      allMatches
+      val matchedPartitions: Array[Long] = partitionerBroadcast.value.overlapPartitions(mbr)
+      matchedPartitions.map(tileid => (tileid, feature))
     })
     val plotter: Plotter = Plotter.getConfiguredPlotter(plotterClass, opts)
     val partialTiles: RDD[(Long, Canvas)] = featuresAssignedToTiles.mapPartitions(partitionedFeatures =>
@@ -384,15 +375,9 @@ Can be specified as a range min..max (inclusive of both) or as a single number w
     // Assign each feature to all the overlapping tiles and group by tile ID
     val featuresAssignedToTiles: RDD[(Long, IFeature)] = features.flatMap(feature => {
       val mbr = new EnvelopeNDLite(2)
-      val matchedPartitions: LongArray = new LongArray()
-      val allMatches: ArrayBuffer[(Long, IFeature)] = new ArrayBuffer[(Long, IFeature)]
       mbr.merge(feature.getGeometry)
-      partitioner.overlapPartitions(mbr, matchedPartitions)
-      for (i <- 0 until matchedPartitions.size()) {
-        val pid: Long = matchedPartitions.get(i)
-        allMatches += ((pid, feature))
-      }
-      allMatches
+      val allMatches: Array[Long] = partitioner.overlapPartitions(mbr)
+      allMatches.map(pid => (pid, feature))
     })
 
     val plotter: Plotter = Plotter.getConfiguredPlotter(plotterClass, opts)

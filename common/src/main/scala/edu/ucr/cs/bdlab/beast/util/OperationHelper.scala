@@ -257,13 +257,13 @@ object OperationHelper extends Logging {
     var inout = Seq[String]()
     var declaredParameters = Seq[String]()
     val options = new BeastOptions()
-    val optionName = "((\\w+)(\\[\\d+\\])?)"
+    val optionName = "((\\w[\\w\\-]*)(\\[\\d+\\])?)"
     val booleanTrueRegex = raw"-$optionName".r
     val booleanFalseRegex = raw"-no-$optionName".r
     val optionValue = raw"${optionName}:(.*)".r
     args.slice(1, args.size).foreach {
-      case booleanTrueRegex(nameNumber, name, number) => declaredParameters = declaredParameters :+ name; options.setBoolean(nameNumber, true)
       case booleanFalseRegex(nameNumber, name, number) => declaredParameters = declaredParameters :+ name; options.setBoolean(nameNumber, false)
+      case booleanTrueRegex(nameNumber, name, number) => declaredParameters = declaredParameters :+ name; options.setBoolean(nameNumber, true)
       case optionValue(nameNumber, name, number, argvalue) => declaredParameters = declaredParameters :+ name; options.set(nameNumber, argvalue)
       case other => inout = inout :+ other
     }

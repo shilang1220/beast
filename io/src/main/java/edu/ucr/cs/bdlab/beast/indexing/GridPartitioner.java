@@ -45,7 +45,6 @@ public class GridPartitioner implements SpatialPartitioner {
   private static final Log LOG = LogFactory.getLog(GridPartitioner.class);
 
   /**The MBR of the region to be partitioned*/
-  // 网格覆盖外包
   protected final EnvelopeNDLite gridMBR = new EnvelopeNDLite();
 
   /**Total number of partitions along each dimension*/
@@ -84,7 +83,6 @@ public class GridPartitioner implements SpatialPartitioner {
   public void construct(Summary summary, double[][] sample, AbstractHistogram histogram, int numBuckets) {
     this.gridMBR.set(summary);
     numPartitions = new int[summary.getCoordinateDimension()];
-    //计算分区表
     computeNumberOfPartitionsAlongAxes(summary, numBuckets, numPartitions);
   }
 
@@ -95,7 +93,6 @@ public class GridPartitioner implements SpatialPartitioner {
    * side length. Finally, it iterates over the dimensions to compute the desired number of partitions along each axis.
    * While doing that final step, it keeps into account that the total number of partitions should not exceed the given
    * number.
-   * 计算网格模式下的各坐标轴分区数
    * @param mbr the MBR of the input space
    * @param numCells the desired number of cells
    * @param numPartitions (out) the computed number of partitions along each axis
@@ -147,7 +144,6 @@ public class GridPartitioner implements SpatialPartitioner {
     return numPartitions.length;
   }
 
-  //根据要素外包举行，计算索引的分区ID集合
   @Override
   public void overlapPartitions(EnvelopeNDLite recordMBR, IntArray matchedPartitions) {
     int[] overlapMin = new int[gridMBR.getCoordinateDimension()];
@@ -161,10 +157,8 @@ public class GridPartitioner implements SpatialPartitioner {
         overlapMax[d] = numPartitions[d];
       } else {
         // Find overlapping partitions
-        // 某点在网格体系中的坐标计算公式：   该点在某维度的相对坐标（相对于网格整体外包在该维度上的最小值）/该维度上的网格整体边长 * 网格在该维度上的分区数
         overlapMin[d] = (int) Math.floor((recordMBR.getMinCoord(d) - gridMBR.getMinCoord(d)) * numPartitions[d] / gridMBR.getSideLength(d));
         overlapMax[d] = (int) Math.ceil((recordMBR.getMaxCoord(d) - gridMBR.getMinCoord(d)) * numPartitions[d] / gridMBR.getSideLength(d));
-
         if (overlapMax[d] == overlapMin[d]) {
           // Special case when the coordinate perfectly aligns with the grid boundary
           overlapMax[d]++;

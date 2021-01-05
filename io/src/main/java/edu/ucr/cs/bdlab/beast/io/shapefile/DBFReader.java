@@ -329,7 +329,7 @@ public class DBFReader extends RecordReader<Object, IFeature> {
       values[iField] = fieldValue;
       startOffset += fieldDescriptor.fieldLength;
     }
-    return new Feature(null, fieldNames, fieldTypes, values);
+    return Feature.create(null, fieldNames, fieldTypes, values);
   }
 
   @Override
