@@ -29,6 +29,9 @@ import org.apache.spark.sql.SparkSession
 object Main extends Logging {
 
   def main(args: Array[String]): Unit = {
+
+    var x =2.0;
+
     // Get the operation to run
     //如果main函数的参数个数为0，则打印beast的usages信息，并退出
     if (args.length == 0) {
@@ -56,7 +59,7 @@ object Main extends Logging {
     conf.setAppName("Beast/" + parsedCLO.operation.metadata.shortName)
 
     // Set Spark master to local if not already set
-    // 如果spark没有配置，则转为本地执行
+    // 如果spark没有配置master，则配置为本地部署模式，按照CPU核数设置并行线程数
     if (!conf.contains("spark.master"))
       conf.setMaster("local[*]")
     logInfo(s"Using master '${conf.get("spark.master")}'")
@@ -78,8 +81,10 @@ object Main extends Logging {
     // Set the CRSServer information in both Spark Configuration and BeastOptions
     // 设置spark和beast的CRS参数
     conf.set(CRSServer.CRSServerPort, crsServerPort.toString)
+
     val sparkSession = SparkSession.builder().config(conf).getOrCreate()
     val sparkContext = sparkSession.sparkContext
+
     val t1 = System.nanoTime
     try {
       parsedCLO.options.setInt(CRSServer.CRSServerPort, crsServerPort)
