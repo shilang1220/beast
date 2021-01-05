@@ -20,7 +20,7 @@ If you are starting a new Maven project, use the following command to create a n
 Java and Scala examples.
 ```shell
 mvn archetype:generate -DgroupId=com.example.beastExample -DartifactId=beast-project \
-    -DarchetypeGroupId=edu.ucr.cs.bdlab -DarchetypeArtifactId=beast-spark -DarchetypeVersion=0.8.3
+    -DarchetypeGroupId=edu.ucr.cs.bdlab -DarchetypeArtifactId=beast-spark -DarchetypeVersion=0.9.0
 ```
 
 If you already have a Maven project, add the following dependency to it.
@@ -28,7 +28,7 @@ If you already have a Maven project, add the following dependency to it.
 <dependency>
   <groupId>edu.ucr.cs.bdlab</groupId>
   <artifactId>beast-spark</artifactId>
-  <version>0.8.3</version>
+  <version>0.9.0</version>
 </dependency>
 ```
 
@@ -62,7 +62,7 @@ No setup is needed to access CLI. As a shortcut, you can setup a new command `be
 to the CLI main function. Just add the following line to your `~/.bashrc` or `~/.zshrc` and open a new shell window.
 
 ```shell
-alias beast="spark-submit --packages edu.ucr.cs.bdlab:beast-spark:0.8.3 --class edu.ucr.cs.bdlab.beast.sparkOperations.Main ."
+alias beast="spark-submit --packages edu.ucr.cs.bdlab:beast-spark:0.9.0-RC2 --class edu.ucr.cs.bdlab.beast.operations.Main ."
 ```
 
 From now on, you can run access Beast by just typing `beast` in your command line.

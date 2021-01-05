@@ -8,7 +8,7 @@
   <groupId>edu.ucr.cs.bdlab</groupId>
   <artifactId>beast</artifactId>
   <packaging>pom</packaging>
-  <version>0.9.0-SNAPSHOT</version>
+  <version>0.9.0</version>
 
   <licenses>
     <license>
@@ -62,7 +62,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <spark.version>3.0.0</spark.version>
+    <spark.version>3.0.1</spark.version>
     <hadoop.version>2.7.4</hadoop.version>
     <maven.assembly.plugin.version>3.1.0</maven.assembly.plugin.version>
     <scala.version>2.12.10</scala.version>
