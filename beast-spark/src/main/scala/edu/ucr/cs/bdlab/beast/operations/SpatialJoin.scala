@@ -23,6 +23,7 @@ import edu.ucr.cs.bdlab.beast.common.{BeastOptions, CLIOperation}
 import edu.ucr.cs.bdlab.beast.geolite.{EnvelopeNDLite, IFeature}
 import edu.ucr.cs.bdlab.beast.indexing.{CellPartitioner, GridPartitioner}
 import edu.ucr.cs.bdlab.beast.io.{SpatialFileRDD, SpatialOutputFormat}
+import edu.ucr.cs.bdlab.beast.synopses.Summary
 import edu.ucr.cs.bdlab.beast.util.{OperationMetadata, OperationParam}
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
@@ -131,7 +132,7 @@ object SpatialJoin extends CLIOperation with Logging {
       case ESJDistributedAlgorithm.REPJ =>
         spatialJoinRepJ(r1, r2, joinPredicate, mbrCount)
       case _other => throw new RuntimeException(s"Unrecognized spatial join method ${_other}. " +
-        s"Please specify one of {'bnlj'='sjmr', 'dj'}")
+        s"Please specify one of {'pbsm'='sjmr', 'dj', 'repj', 'bnlj'}")
     }
   }
 
@@ -180,18 +181,23 @@ object SpatialJoin extends CLIOperation with Logging {
   def spatialJoinPBSM(r1: SpatialRDD, r2: SpatialRDD, joinPredicate: ESJPredicate,
                       numMBRTests: LongAccumulator = null): RDD[(IFeature, IFeature)] = {
     // Compute the MBR of the intersection area
-    val mbr1 = r1.summary
-    val mbr2 = r2.summary
+    r1.sparkContext.setJobGroup("Analyzing", "Summarizing r1 and r2 for PBSM")
+    val mbr1Async = Summary.computeForFeaturesAsync(r1)
+    val mbr2Async = Summary.computeForFeaturesAsync(r2)
+    val mbr1 = mbr1Async.get()
+    val mbr2 = mbr2Async.get()
     val intersectionMBR = mbr1.intersectionEnvelope(mbr2);
     // Divide the intersection MBR based on the input sizes assuming 16MB per cell
     val totalSize = mbr1.size + mbr2.size
     val numCells: Int = ((totalSize / (16 * 1024 * 1024)).toInt * 100) max 1
     val gridPartitioner = new GridPartitioner(intersectionMBR, numCells)
+    gridPartitioner.setup(new BeastOptions(), true)
     // Co-partition both datasets  using the same partitioner
     val r1Partitioned: RDD[(Int, IFeature)] = r1.partitionBy(gridPartitioner)
     val r2Partitioned: RDD[(Int, IFeature)] = r2.partitionBy(gridPartitioner)
     val joined: RDD[(Int, (Iterable[IFeature], Iterable[IFeature]))] = r1Partitioned.cogroup(r2Partitioned)
 
+    r1.sparkContext.setJobGroup("SpatialJoin", s"Partition based spatial-merge join with ${joined.getNumPartitions} partitions")
     joined.flatMap(r => {
       val partitionID = r._1
       val dupAvoidanceMBR = new EnvelopeNDLite(2)
@@ -234,8 +240,7 @@ object SpatialJoin extends CLIOperation with Logging {
    * @return a pair RDD for joined features
    */
   def spatialJoinPBSM(r1: JavaSpatialRDD, r2: JavaSpatialRDD, joinPredicate: ESJPredicate)
-  : JavaPairRDD[IFeature, IFeature] =
-    spatialJoinPBSM(r1, r2, joinPredicate, null)
+  : JavaPairRDD[IFeature, IFeature] = spatialJoinPBSM(r1, r2, joinPredicate, null)
 
   /**
    * Runs a spatial join between the two given RDDs using the block-nested-loop join algorithm.
@@ -253,6 +258,8 @@ object SpatialJoin extends CLIOperation with Logging {
 
     // Combine them using the Cartesian product (as in block nested loop)
     val f1f2 = f1.cartesian(f2)
+
+    r1.sparkContext.setJobGroup("SpatialJoin", s"Block-nested loop join with ${f1f2.getNumPartitions} partitions")
 
     // For each pair of blocks, run the spatial join algorithm
     f1f2.flatMap(p1p2 => {
@@ -294,6 +301,7 @@ object SpatialJoin extends CLIOperation with Logging {
       "r2 should be spatially partitioned")
     val matchingPartitions: RDD[(EnvelopeNDLite, (Iterator[IFeature], Iterator[IFeature]))] =
       new SpatialIntersectionRDD1(r1, r2)
+    r1.sparkContext.setJobGroup("SpatialJoin", s"Distributed join with ${matchingPartitions.getNumPartitions} partitions")
     matchingPartitions.flatMap(joinedPartition => {
       val dupAvoidanceMBR: EnvelopeNDLite = joinedPartition._1
       // Extract the two arrays of features
@@ -320,6 +328,7 @@ object SpatialJoin extends CLIOperation with Logging {
       "r2 should be spatially partitioned")
     val matchingPartitions: RDD[(EnvelopeNDLite, (Iterator[IFeature], Iterator[IFeature]))] =
       new SpatialIntersectionRDD2(r1, r2)
+    r1.sparkContext.setJobGroup("SpatialJoin", s"Distributed join with ${matchingPartitions.getNumPartitions} partitions")
     matchingPartitions.flatMap(joinedPartition => {
       val dupAvoidanceMBR: EnvelopeNDLite = joinedPartition._1
       // Extract the two arrays of features
@@ -339,19 +348,47 @@ object SpatialJoin extends CLIOperation with Logging {
    */
   def spatialJoinRepJ(r1: SpatialRDD, r2: SpatialRDD, joinPredicate: ESJPredicate,
                       numMBRTests: LongAccumulator = null): RDD[(IFeature, IFeature)] = {
-    require(r1.isSpatiallyPartitioned, "r1 should be spatially partitioned")
-    val partitioner = new CellPartitioner(r1.partitioner.get.asInstanceOf[SparkSpatialPartitioner].getSpatialPartitioner)
+    require(r1.isSpatiallyPartitioned || r2.isSpatiallyPartitioned,
+      "Repartition join requires at least one of the two datasets to be spatially partitioned")
+    // Choose which dataset to repartition, 1 for r1, and 2 for r2
+    // If only one dataset is partitioned, always repartition the other one
+    // If both are partitioned, repartition the smaller one
+    val whichDatasetToPartition: Int = if (!r1.isSpatiallyPartitioned)
+      1
+    else if (!r2.isSpatiallyPartitioned)
+      2
+    else {
+      // Choose the smaller dataset
+      r1.sparkContext.setJobGroup("Analyzing", "Estimating the size of r1 and r2 for REPJ")
+      val mbr1Async = Summary.computeForFeaturesAsync(r1)
+      val mbr2Async = Summary.computeForFeaturesAsync(r2)
+      val size1: Long = mbr1Async.get().size
+      val size2: Long = mbr2Async.get().size
+      if (size1 < size2) 1 else 2
+    }
+    val (r1Partitioned: SpatialRDD, r2Partitioned: SpatialRDD) = if (whichDatasetToPartition == 1) {
+      // Repartition r1 according to r2
+      val partitioner = new CellPartitioner(r2.partitioner.get.asInstanceOf[SparkSpatialPartitioner].getSpatialPartitioner)
 
-    // Co-partition both datasets using the same partitioner
-    val r2Partitioned: RDD[(Int, IFeature)] = r2.partitionBy(partitioner)
+      // Co-partition both datasets using the same partitioner
+      val r1Partitioned: RDD[IFeature] = r1.partitionBy(partitioner).mapPartitions(_.map(_._2), preservesPartitioning = true)
+      (r1Partitioned, r2)
+    } else {
+      // Repartition r2 according to r1
+      val partitioner = new CellPartitioner(r1.partitioner.get.asInstanceOf[SparkSpatialPartitioner].getSpatialPartitioner)
+
+      // Co-partition both datasets using the same partitioner
+      val r2Partitioned: RDD[IFeature] = r2.partitionBy(partitioner).mapPartitions(_.map(_._2), preservesPartitioning = true)
+      (r1, r2Partitioned)
+    }
     val joined: RDD[(EnvelopeNDLite, (Iterator[IFeature], Iterator[IFeature]))] =
-      new SpatialIntersectionRDD3(r1, r2Partitioned)
+      new SpatialIntersectionRDD1(r1Partitioned, r2Partitioned)
 
+    r1.sparkContext.setJobGroup("SpatialJoin", s"Repartition Join with ${joined.getNumPartitions} partitions")
     joined.flatMap(r => {
       val dupAvoidanceMBR: EnvelopeNDLite = r._1
       val p1: Array[IFeature] = r._2._1.toArray
       val p2: Array[IFeature] = r._2._2.toArray
-      logInfo(s"Joining cell $dupAvoidanceMBR")
       spatialJoinIntersectsPlaneSweepFeatures(p1, p2, dupAvoidanceMBR, joinPredicate, numMBRTests)
     })
   }
