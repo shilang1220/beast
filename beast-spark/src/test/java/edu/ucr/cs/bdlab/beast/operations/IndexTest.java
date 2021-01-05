@@ -234,9 +234,9 @@ public class IndexTest extends JavaSparkTest {
 
   public void testCreatePartitioner() {
     List<IFeature> features = Arrays.asList(
-        new Feature(new PointND(new GeometryFactory(), 2, 0.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 2.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 1.0, 7.0))
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 0.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 2.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.0, 7.0))
     );
     JavaRDD<IFeature> rddFeatures = javaSparkContext().parallelize(features);
     BeastOptions opts = new BeastOptions(false);
@@ -259,9 +259,9 @@ public class IndexTest extends JavaSparkTest {
 
   public void testCreatePartitionerWithEmptyGeometries() {
     List<IFeature> features = Arrays.asList(
-        new Feature(EmptyGeometry.instance),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 2.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 1.0, 7.0))
+        Feature.create(null, EmptyGeometry.instance),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 2.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.0, 7.0))
     );
     JavaRDD<IFeature> rddFeatures = javaSparkContext().parallelize(features);
     BeastOptions opts = new BeastOptions(false);
@@ -285,10 +285,10 @@ public class IndexTest extends JavaSparkTest {
   public void testPartitionFeatures() {
     GeometryFactory factory = new GeometryFactory();
     List<IFeature> features = Arrays.asList(
-        new Feature(factory.createPoint(new CoordinateXY(0.0, 1.0)), null, null, new Object[]{"1"}),
-        new Feature(factory.createPoint(new CoordinateXY(2.0, 2.0)), null, null, new Object[]{"2"}),
-        new Feature(factory.createPoint(new CoordinateXY(1.5, 3.0)), null, null, new Object[]{"3"}),
-        new Feature(factory.createPoint(new CoordinateXY(1.0, 1.5)), null, null, new Object[]{"4"})
+        Feature.create(factory.createPoint(new CoordinateXY(0.0, 1.0)), null, null, new Object[]{"1"}),
+        Feature.create(factory.createPoint(new CoordinateXY(2.0, 2.0)), null, null, new Object[]{"2"}),
+        Feature.create(factory.createPoint(new CoordinateXY(1.5, 3.0)), null, null, new Object[]{"3"}),
+        Feature.create(factory.createPoint(new CoordinateXY(1.0, 1.5)), null, null, new Object[]{"4"})
     );
     JavaRDD<IFeature> featuresRDD = javaSparkContext().parallelize(features);
     BeastOptions clo = new BeastOptions(false).setBoolean(IndexHelper.DisjointIndex(), true);
@@ -316,7 +316,7 @@ public class IndexTest extends JavaSparkTest {
 
   public void testPartitionWithReplication() {
     List<IFeature> features = Arrays.asList(
-        new Feature(new EnvelopeND(new GeometryFactory(), 2, 0.5, 0.5, 1.5, 1.5))
+        Feature.create(null, new EnvelopeND(new GeometryFactory(), 2, 0.5, 0.5, 1.5, 1.5))
     );
     SpatialPartitioner p = new GridPartitioner(new EnvelopeNDLite(2, 0.0, 0.0, 2.0, 2.0), new int[] {2, 2});
     JavaRDD<IFeature> featuresRDD = javaSparkContext().parallelize(features);
@@ -326,9 +326,9 @@ public class IndexTest extends JavaSparkTest {
 
   public void testWriteIndex() throws IOException {
     List<IFeature> features = Arrays.asList(
-        new Feature(new PointND(new GeometryFactory(), 2, 0, 1)),
-        new Feature(new PointND(new GeometryFactory(), 2, 2, 2)),
-        new Feature(new PointND(new GeometryFactory(), 2, 1.5, 3))
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 0, 1)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 2, 2)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.5, 3))
     );
     JavaRDD<IFeature> featuresRDD = javaSparkContext().parallelize(features);
     BeastOptions clo = new BeastOptions(false).setBoolean(IndexHelper.DisjointIndex(), true);
@@ -395,7 +395,7 @@ public class IndexTest extends JavaSparkTest {
     List<IFeature> points = new ArrayList<>();
     Random random = new Random(1);
     for (int i = 0; i < numPoints; i++)
-      points.add(new Feature(new PointND(new GeometryFactory(), 2, random.nextDouble(), random.nextDouble())));
+      points.add(Feature.create(null, new PointND(new GeometryFactory(), 2, random.nextDouble(), random.nextDouble())));
 
     JavaRDD<IFeature> featuresRDD = javaSparkContext().parallelize(points, 10);
 

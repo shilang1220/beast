@@ -14,11 +14,11 @@ import edu.ucr.cs.bdlab.beast.indexing.GridPartitioner
 class SpatialJoinScalaTest extends FunSuite with ScalaSparkTest {
   test("SpatialJoinDupAvoidance") {
     val r = List(
-      new Feature(new EnvelopeND(new GeometryFactory, 2, 10.0, 10.0, 10.1, 10.1)),
-      new Feature(new EnvelopeND(new GeometryFactory, 2, 3.0, 1.0, 5.0, 3.0))
+      Feature.create(null, new EnvelopeND(new GeometryFactory, 2, 10.0, 10.0, 10.1, 10.1)),
+      Feature.create(null, new EnvelopeND(new GeometryFactory, 2, 3.0, 1.0, 5.0, 3.0))
     )
     val s = List(
-      new Feature(new EnvelopeND(new GeometryFactory, 2, 2.0, 0.0, 4.0, 2.0))
+      Feature.create(null, new EnvelopeND(new GeometryFactory, 2, 2.0, 0.0, 4.0, 2.0))
     )
     val results = SpatialJoin.spatialJoinIntersectsPlaneSweepFeatures(r.toArray, s.toArray,
       new EnvelopeNDLite(2, 2.0, 0.0, 5.0, 3.0), ESJPredicate.Intersects, null)

@@ -43,8 +43,8 @@ public class HistogramTest extends JavaSparkTest {
 
   public void testComputeTwoRoundsPoints() {
     JavaRDD<IFeature> points = javaSparkContext().parallelize(Arrays.asList( new IFeature[] {
-        new Feature(new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
     }));
     UniformHistogram h = (UniformHistogram) HistogramOP.computeHistogram(points, 4);
     assertEquals(2, h.getNumPartitions(0));
@@ -59,7 +59,7 @@ public class HistogramTest extends JavaSparkTest {
     Feature[] points = new Feature[numPoints];
     Random random = new Random(1);
     for (int i = 0; i < points.length; i++)
-      points[i] = new Feature(new PointND(new GeometryFactory(), 2, random.nextDouble() * 2, random.nextDouble()));
+      points[i] = Feature.create(null, new PointND(new GeometryFactory(), 2, random.nextDouble() * 2, random.nextDouble()));
     JavaRDD<IFeature> pointsRDD = javaSparkContext().parallelize(Arrays.asList(points), 4);
     int numBuckets = 100;
     UniformHistogram h = (UniformHistogram) HistogramOP.computeHistogram(pointsRDD, numBuckets);
@@ -69,9 +69,9 @@ public class HistogramTest extends JavaSparkTest {
 
   public void testShouldSkipEmptyGeometries() {
     IFeature[] arfeatures = {
-        new Feature(new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
-        new Feature(EmptyGeometry.instance),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
+        Feature.create(null, EmptyGeometry.instance),
     };
     JavaRDD<IFeature> features = javaSparkContext().parallelize(Arrays.asList(arfeatures));
     UniformHistogram h = (UniformHistogram) HistogramOP.computeHistogram(features, 4);
@@ -84,9 +84,9 @@ public class HistogramTest extends JavaSparkTest {
 
   public void testShouldSkipEmptyGeometriesWithSizeHistogram() {
     IFeature[] arfeatures = {
-        new Feature(new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
-        new Feature(EmptyGeometry.instance),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 1.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 3.0)),
+        Feature.create(null, EmptyGeometry.instance),
     };
     JavaRDD<IFeature> features = javaSparkContext().parallelize(Arrays.asList(arfeatures));
     AbstractHistogram h = HistogramOP.computePointHistogramTwoPass(features, IFeature::getStorageSize, new EnvelopeNDLite(2, 1.0, 1.0, 3.0, 3.0), 2, 2);
@@ -131,10 +131,10 @@ public class HistogramTest extends JavaSparkTest {
     for (int i = 0; i < envelopes.length; i++) {
       int x = random.nextInt(1000);
       int y = random.nextInt(1000);
-      envelopes[i] = new Feature(new EnvelopeND(new GeometryFactory(), 2, x, y, x + 100, y + 100));
+      envelopes[i] = Feature.create(null, new EnvelopeND(new GeometryFactory(), 2, x, y, x + 100, y + 100));
     }
     // Add a record that is completely out of bounds
-    envelopes[numRecords] = new Feature(new EnvelopeND(new GeometryFactory(), 2, 2000, 2000, 2000 + 100, 2000 + 100));
+    envelopes[numRecords] = Feature.create(null, new EnvelopeND(new GeometryFactory(), 2, 2000, 2000, 2000 + 100, 2000 + 100));
     JavaRDD<IFeature> envelopesRDD = javaSparkContext().parallelize(Arrays.asList(envelopes), 4);
     EnvelopeNDLite mbr = new EnvelopeNDLite(2, 0, 0, 1000, 1000);
 

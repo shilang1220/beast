@@ -16,39 +16,29 @@
 package edu.ucr.cs.bdlab.beast.operations;
 
 import edu.ucr.cs.bdlab.beast.common.BeastOptions;
-import edu.ucr.cs.bdlab.beast.geolite.Feature;
-import edu.ucr.cs.bdlab.beast.geolite.FieldType;
-import edu.ucr.cs.bdlab.beast.synopses.Summary;
-import edu.ucr.cs.bdlab.beast.synopses.SummaryAccumulator;
 import edu.ucr.cs.bdlab.beast.geolite.EmptyGeometry;
-import edu.ucr.cs.bdlab.beast.geolite.GeometryHelper;
-import edu.ucr.cs.bdlab.beast.geolite.GeometryReader;
-import edu.ucr.cs.bdlab.beast.geolite.GeometryWriter;
+import edu.ucr.cs.bdlab.beast.geolite.Feature;
 import edu.ucr.cs.bdlab.beast.geolite.IFeature;
 import edu.ucr.cs.bdlab.beast.geolite.PointND;
 import edu.ucr.cs.bdlab.beast.io.SpatialOutputFormat;
 import edu.ucr.cs.bdlab.beast.io.SpatialReader;
+import edu.ucr.cs.bdlab.beast.synopses.Summary;
+import edu.ucr.cs.bdlab.beast.synopses.SummaryAccumulator;
 import edu.ucr.cs.bdlab.test.JavaSparkTest;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 
 public class GeometricSummaryTest extends JavaSparkTest {
 
   public void testComputeWithAccumulator() {
     IFeature[] points = {
-        new Feature(new PointND(new GeometryFactory(), 2, 0.0, 0.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 0.0, 0.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
     };
     SummaryAccumulator accum = Summary.createSummaryAccumulator(sparkContext());
     JavaRDD<IFeature> features = javaSparkContext().parallelize(Arrays.asList(points));
@@ -66,9 +56,9 @@ public class GeometricSummaryTest extends JavaSparkTest {
 
   public void testComputeWithEmptyGeometriesUsingAccumulator() {
     IFeature[] points = {
-        new Feature(EmptyGeometry.instance),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
+        Feature.create(null, EmptyGeometry.instance),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
     };
     SummaryAccumulator accum = Summary.createSummaryAccumulator(sparkContext());
     JavaRDD<IFeature> features = javaSparkContext().parallelize(Arrays.asList(points));
@@ -85,9 +75,9 @@ public class GeometricSummaryTest extends JavaSparkTest {
 
   public void testComputeWithEmptyGeometriesUsingRDD() {
     IFeature[] points = {
-        new Feature(EmptyGeometry.instance),
-        new Feature(new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
-        new Feature(new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
+        Feature.create(null, EmptyGeometry.instance),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 3.0, 1.0)),
+        Feature.create(null, new PointND(new GeometryFactory(), 2, 2.0, 10.0)),
     };
     JavaRDD<IFeature> features = javaSparkContext().parallelize(Arrays.asList(points));
     Summary mbr = Summary.computeForFeatures(features);

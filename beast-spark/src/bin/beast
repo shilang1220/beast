@@ -30,14 +30,20 @@ beast_args=${@:i}
 # Search for an uber JAR where this file is located
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 STARJAR=$(find $DIR -maxdepth 2 -iname 'beast-uber-spark*.jar')
+
 if [ -e "$STARJAR" ]; then
   # Run using the JAR file
   cmd="spark-submit $spark_args $STARJAR $beast_args"
 else
   # Run from the Maven central JAR file
+  # If no jai_core-1.1.3.jar file exists, download it to current directory
+  JAIJAR="$DIR/jai_core.1.1.3.jar"
+  [ -e "$JAIJAR" ] || curl -o $JAIJAR https://repo.osgeo.org/repository/geotools-releases/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar
+
   cmd="spark-submit $spark_args --repositories https://repo.osgeo.org/repository/release/ \
-      --exclude-packages javax.media:jai_core --class edu.ucr.cs.bdlab.beast.operations.Main \
-      --packages edu.ucr.cs.bdlab:beast-spark:0.8.0-RC1 . $beast_args"
+      --class edu.ucr.cs.bdlab.beast.operations.Main \
+      --exclude-packages javax.media:jai_core --jars $JAIJAR
+      --packages edu.ucr.cs.bdlab:beast-spark:0.9.0 . $beast_args"
 fi
 
 # Now, run the command
