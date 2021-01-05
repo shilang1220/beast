@@ -36,7 +36,7 @@ import java.util
   description = "Builds a distributed spatial index",
   inputArity = "+",
   outputArity = "1",
-  inheritParams = Array(classOf[SpatialFileRDD], classOf[SpatialOutputFormat], classOf[RGrovePartitioner], classOf[RSGrovePartitioner])
+  inheritParams = Array(classOf[SpatialFileRDD], classOf[SpatialOutputFormat], classOf[RGrovePartitioner])
 )
 object Index extends CLIOperation with Logging {
 
