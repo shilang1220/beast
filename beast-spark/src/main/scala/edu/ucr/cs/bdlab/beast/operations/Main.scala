@@ -72,7 +72,6 @@ object Main extends Logging {
         // 2- Fall back to Java operation
         case _: Exception => parsedCLO.operation.klass.asSubclass(classOf[CLIOperation]).newInstance
       }
-
     // Initialize the spark context
     // 启动坐标系协同服务器（CRSServer）
     val crsServerPort = CRSServer.startServer()
@@ -81,15 +80,6 @@ object Main extends Logging {
     conf.set(CRSServer.CRSServerPort, crsServerPort.toString)
     val sparkSession = SparkSession.builder().config(conf).getOrCreate()
     val sparkContext = sparkSession.sparkContext
-
-//    import edu.ucr.cs.bdlab.beast._
-//    val states = sparkContext.shapefile("tl_2018_us_state.zip").toDataFrame(sparkSession)
-//    states.createOrReplaceTempView("states")
-//    states.printSchema()
-//    sparkSession.sql("SELECT count(*) FROM states WHERE ST_IsSimple(thegeom)").show(5)
-//    System.exit(0)
-//
-    // 初始时间标记
     val t1 = System.nanoTime
     try {
       parsedCLO.options.setInt(CRSServer.CRSServerPort, crsServerPort)
