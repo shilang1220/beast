@@ -35,7 +35,8 @@ package object beast extends ReadWriteMixin
   with IndexMixin
   with VisualizationMixin
   with RaptorMixin {
-  SparkSQLRegistration.registerUDT
-  SparkSQLRegistration.registerUDF(SparkSession.getActiveSession.get)
-
+  if (SparkSession.getActiveSession.nonEmpty) {
+    SparkSQLRegistration.registerUDT
+    SparkSQLRegistration.registerUDF(SparkSession.getActiveSession.get)
+  }
 }

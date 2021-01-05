@@ -104,7 +104,7 @@ object JavaSpatialRDDHelper {
     rdd.map(f => {
       var g = f.getGeometry
       g = Reprojector.reprojectGeometry(g, transformationInfo)
-      new Feature(f, g)
+      Feature.create(f, g)
     })
   }
 
