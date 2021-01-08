@@ -84,12 +84,14 @@ object Histogram extends CLIOperation with Logging {
     val bo: BeastOptions = opts
     val features = sc.spatialFile(inputs(0), opts)
 
+    //获取计算直方图计数的函数，三种：统计要素个数、统计要素内存容量、统计要素输出时的物理存储容量，默认是统计要素个数
     val sizeFunction: IFeature => Int = opts.getString(HistogramValue, "count").toLowerCase match {
-      case "count" => _ => 1
-      case "size" => _.getStorageSize
-      case "writesize" => new FeatureWriterSizeFunction(opts)
+      case "count" => _ => 1        // 如果采用count计数方式，则计数函数返回1
+      case "size" => _.getStorageSize   // 如果采用size技数方式，则使用getStorageSize函数，技术函数返回要素占用的容量大小
+      case "writesize" => new FeatureWriterSizeFunction(opts)   // 如果采用writesize计数方式，则使用FeatureWriterSizeFunction函数，计数函数返回根据输出格式自动计算的容量大小
     }
 
+    //获取直方图计算的方法，四种: onepass，onehalfpass，twopass，sparse，默认是twopass
     val method: HistogramOP.ComputationMethod = opts.getString(ComputationMethod, "twopasses").toLowerCase() match {
       case "twopasses" => HistogramOP.TwoPass
       case "onehalfpass" => HistogramOP.OneHalfPass
@@ -97,10 +99,13 @@ object Histogram extends CLIOperation with Logging {
       case "sparse" => HistogramOP.Sparse
     }
 
+    //获取直方图类型，两种：simple，euler
     val htype: HistogramOP.HistogramType = opts.getString(HistogramType, "simple").toLowerCase match {
       case "simple" => HistogramOP.PointHistogram
       case "euler" => HistogramOP.EulerHistogram
     }
+
+    //根据参数计算直方图，注意：这里是根据数据集最小外包举行的大小，自动生成的均匀网格，各维度网格数量为numBuckets（默认为1000个网格）
     HistogramOP.computeHistogram(features, sizeFunction, method, htype, numBuckets)
 
   }

@@ -71,6 +71,7 @@ object HistogramOP extends Logging {
    */
   @varargs def computePointHistogramSparse(features: SpatialRDD, sizeFunction: IFeature => Int,
                                           mbb: EnvelopeNDLite, numBuckets: Int*): UniformHistogram = {
+
     val gridDimensions: Array[Int] = computeGridDimensions(mbb, numBuckets: _*)
     val binSize: RDD[(Int, Long)] = features.map(feature => {
       val center = new PointND(feature.getGeometry)
@@ -78,6 +79,7 @@ object HistogramOP extends Logging {
       (binID, sizeFunction(feature).toLong)
     }).filter(_._1 >= 0)
     val finalSizes: RDD[(Int, Long)] = binSize.reduceByKey(_+_)
+
     val finalHistogram: UniformHistogram = new UniformHistogram(mbb, gridDimensions:_*)
     finalSizes.collect.foreach(pt => finalHistogram.values(pt._1) = pt._2)
     finalHistogram

@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 
 /**
  * A wrapper around a {@link SpatialPartitioner} to make it a Spark partitioner.
+ * 用于spark环境中的分区，暂时未看到与非spark环境的区别
  */
 public class SparkSpatialPartitioner extends Partitioner implements Externalizable {
 
@@ -53,6 +54,7 @@ public class SparkSpatialPartitioner extends Partitioner implements Externalizab
     try {
       String partitionerClassName = in.readUTF();
       Class<? extends SpatialPartitioner> partitionerClass = Class.forName(partitionerClassName).asSubclass(SpatialPartitioner.class);
+
       this.spatialPartitioner = partitionerClass.newInstance();
       this.spatialPartitioner.readExternal(in);
     } catch (ClassNotFoundException e) {
