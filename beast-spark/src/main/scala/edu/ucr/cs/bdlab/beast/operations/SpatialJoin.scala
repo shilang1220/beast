@@ -56,19 +56,29 @@ object SpatialJoin extends CLIOperation with Logging {
 
   @throws(classOf[IOException])
   override def run(opts: BeastOptions, inputs: Array[String], outputs: Array[String], sc: SparkContext): Unit = {
+
     // Set the split size to 16MB so that the code will not run out of memory
+    // 设置读取的大小
     sc.hadoopConfiguration.setInt("mapred.max.split.size", 16 * 1024 * 1024)
+
     val mbrTests = sc.longAccumulator(MBRTestsAccumulatorName)
     val joinPredicate = opts.getEnumIgnoreCase(SpatialJoinPredicate, ESJPredicate.Intersects)
     val joinMethod = opts.getEnumIgnoreCase(SpatialJoinMethod, ESJDistributedAlgorithm.DJ)
+
     // Skip duplicate avoidance while reading the input if we run the DJ algorithm
     if (joinMethod == ESJDistributedAlgorithm.DJ)
       opts.setBoolean(SpatialFileRDD.DuplicateAvoidance, false)
     else if (joinMethod == ESJDistributedAlgorithm.REPJ)
       opts.setBoolean(SpatialFileRDD.DuplicateAvoidance+"[0]", false)
+
+    // 创建两个数据集的RDD
     val f1rdd = sc.spatialFile(inputs(0), opts.retainIndex(0))
     val f2rdd = sc.spatialFile(inputs(1), opts.retainIndex(1))
+
+    // 执行Join操作，生成Join后的RDD
     val joinResults = spatialJoin(f1rdd, f2rdd, joinPredicate, joinMethod, mbrTests)
+
+    // 输出Join结果
     if (opts.getBoolean(WriteOutput, true)) {
       val outPath = new Path(outputs(0))
       // Delete output file if exists and overwrite flag is on
@@ -94,6 +104,8 @@ object SpatialJoin extends CLIOperation with Logging {
    * This method is a transformation. However, if the [[ESJDistributedAlgorithm.PBSM]] is used, the MBR of the two
    * inputs has to be calculated first which runs a reduce action on each dataset even if the output of the spatial
    * join is not used.
+   * Join计算函数
+   *
    * @param r1 the first (left) dataset
    * @param r2 the second (right) dataset
    * @param joinPredicate the join predicate. The default is [[ESJPredicate.Intersects]] which finds all non-disjoint
@@ -106,8 +118,12 @@ object SpatialJoin extends CLIOperation with Logging {
   def spatialJoin(r1: SpatialRDD, r2: SpatialRDD, joinPredicate: ESJPredicate = ESJPredicate.Intersects,
                   joinMethod: ESJDistributedAlgorithm = null,
                   mbrCount: LongAccumulator = null): RDD[(IFeature, IFeature)] = {
+
+    //是否已经做过索引分区
     val inputsPartitioned: Boolean = r1.isSpatiallyPartitioned && r2.isSpatiallyPartitioned
     // If the joinMethod is not set, choose an algorithm automatically according to the following rules
+
+    //设置join计算方案
     val joinAlgorithm = if (joinMethod != null)
       joinMethod
     else if (r1.isSpatiallyPartitioned && r2.isSpatiallyPartitioned)
@@ -120,6 +136,7 @@ object SpatialJoin extends CLIOperation with Logging {
       ESJDistributedAlgorithm.PBSM
 
     // Run the spatial join algorithm
+    // 执行Join算法
     joinAlgorithm match {
       case ESJDistributedAlgorithm.BNLJ =>
         spatialJoinBNLJ(r1, r2, joinPredicate, mbrCount)
@@ -151,9 +168,11 @@ object SpatialJoin extends CLIOperation with Logging {
   private[beast] def spatialJoinIntersectsPlaneSweepFeatures[T1 <: IFeature, T2 <: IFeature]
       (r: Array[T1], s: Array[T2], dupAvoidanceMBR: EnvelopeNDLite, joinPredicate: ESJPredicate,
        numMBRTests: LongAccumulator): TraversableOnce[(IFeature, IFeature)] = {
+
     if (r.isEmpty || s.isEmpty)
-      return Seq()
+          return Seq()
     logInfo(s"Joining ${r.size} x ${s.size} records")
+
     val refine: ((_ <: IFeature, _ <: IFeature)) => Boolean = joinPredicate match {
       case ESJPredicate.Contains => p => try {p._1.getGeometry.contains(p._2.getGeometry)}
       catch {case e: RuntimeException => logWarning(s"Error comparing records", e); false}
@@ -162,6 +181,7 @@ object SpatialJoin extends CLIOperation with Logging {
       // For MBR intersects, no refine step is needed. Write the results directly to the output
       case ESJPredicate.MBRIntersects => _ => true
     }
+
     new PlaneSweepSpatialJoinIterator(r, s, dupAvoidanceMBR, numMBRTests)
       .filter(refine)
   }

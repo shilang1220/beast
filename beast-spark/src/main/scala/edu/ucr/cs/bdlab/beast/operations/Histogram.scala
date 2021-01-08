@@ -107,6 +107,5 @@ object Histogram extends CLIOperation with Logging {
 
     //根据参数计算直方图，注意：这里是根据数据集最小外包举行的大小，自动生成的均匀网格，各维度网格数量为numBuckets（默认为1000个网格）
     HistogramOP.computeHistogram(features, sizeFunction, method, htype, numBuckets)
-
   }
 }

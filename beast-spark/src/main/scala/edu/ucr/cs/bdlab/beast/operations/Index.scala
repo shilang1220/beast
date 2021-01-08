@@ -71,7 +71,11 @@ object Index extends CLIOperation with Logging {
 
     // Partition the input records using the created partitioner
     //第三步：利用分区器对输入记录创建分区，并生成PartitionedSpatialRDD
-    // features输入的RDD，partitionerClass为分区器，FeatureWriterSizeFunction为输出文件格式写，opts为分区命令的参数
+    // features输入的RDD
+    // partitionerClass为分区器
+    // FeatureWriterSizeFunction为计算要素按照指定输出文件格式写时所占用容量大小的函数
+    // opts为分区命令的参数
+    // 注：分区过程将分区器转换为spark分区器，以充分利用spark的并行处理能力
     val partitionedFeatures: PartitionedSpatialRDD = IndexHelper.partitionFeatures(features, partitionerClass,
       new FeatureWriterSizeFunction(opts), opts)
 

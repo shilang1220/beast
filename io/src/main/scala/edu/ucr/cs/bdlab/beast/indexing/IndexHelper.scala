@@ -160,6 +160,7 @@ object IndexHelper extends Logging {
     // 第一步：计算数据集汇总信息（直方图、样本集和汇总信息）
     val t1 = System.nanoTime()
     val result = summarizeDataset(features.filter(f => !f.getGeometry.isEmpty), partitionerClass, synopsisSize, sizeFunction, balanced)
+
     //返回的三元组（histogram，samples，summary）
     val histogram: UniformHistogram = result._1
     val sampleCoordinates: Array[Array[Double]] = result._2
@@ -189,7 +190,8 @@ object IndexHelper extends Logging {
         throw new RuntimeException("Partitioner " + partitionerClass + " does not support disjoint partitioning")
 
       // Construct the partitioner
-      // 第三步：构造分区器。利用直方图、样本集和汇总信息，调用分区器的contruct方法构造分区
+      // 第三步：构造分区器。
+      // 利用直方图、样本集和汇总信息，调用分区器的contruct方法构造分区
       val nump: Int = computeNumberOfPartitions(numPartitions, summary)
       spatialPartitioner.construct(summary, sampleCoordinates, histogram, nump)
       val t3 = System.nanoTime
@@ -229,7 +231,8 @@ object IndexHelper extends Logging {
 
   /**
    * Compute up-to three summaries as supported by the partitioner.
-   * 计算数据集（一个SpatialRDD）的（histogram, sampleCoordinates, summary）汇总三元组
+   * 计算数据集（一个SpatialRDD）的（h直方图m, 样本点, 汇总信息）三元组
+   *
    * [[HistogramOP]].Sparse method since the histogram size is usually large.
    * @param features the features to summarize
    * @param partitionerClass the partitioner class to compute the summaries for
@@ -241,18 +244,25 @@ object IndexHelper extends Logging {
   private[beast] def summarizeDataset(features: SpatialRDD, partitionerClass: Class[_ <: SpatialPartitioner],
                                       summarySize: Long, sizeFunction: IFeature=>Int, balancedPartitioning: Boolean)
       : (UniformHistogram, Array[Array[Double]], Summary) = {
+
     lazy val sc: SparkContext = features.sparkContext
+
     import edu.ucr.cs.bdlab.beast.cg.CGOperationsMixin._
+
     // The summary is always computed
+    // 第一步：首先计算汇总信息
     val summary: Summary = features.summary
     var sampleCoordinates: Array[Array[Double]] = null
     var histogram: UniformHistogram = null
 
     // Retrieve the construct method to determine the required parameters
+    // 第二步：根据汇总信息创建分区器，用于后续执行分区操作
     val constructMethod = partitionerClass.getMethod("construct", classOf[Summary],
       classOf[Array[Array[Double]]], classOf[AbstractHistogram], classOf[Int])
     val parameterAnnotations = constructMethod.getParameterAnnotations
+
     // Determine whether the sample or the histogram (or both) are needed to construct the partitioner
+    // 第三步：根据分区器类别考虑是否需要采样和构建直方图
     val sampleNeeded = parameterAnnotations(1).exists(p => p.isInstanceOf[SpatialPartitioner.Required] ||
       p.isInstanceOf[SpatialPartitioner.Preferred])
     val histogramNeeded = parameterAnnotations(2).exists(p => p.isInstanceOf[SpatialPartitioner.Required]) ||
@@ -261,20 +271,29 @@ object IndexHelper extends Logging {
     val numDimensions = summary.getCoordinateDimension
 
     // If both sample and histogram are required, reduce the size of the synopsis size to accommodate both
+    //
     val synopsisSize = if (sampleNeeded && histogramNeeded) summarySize / 2 else summarySize
 
+    // 第四步：获得采样数据坐标列表
     if (sampleNeeded) {
+      //  （1）计算样本数量
       val sampleSize = (synopsisSize / (8 * numDimensions)).toInt
+      //  （2）计算采样率
       val samplingRatio: Double = sampleSize.toDouble / summary.numFeatures min 1.0
       logInfo(s"Drawing a sample of roughly $sampleSize with ratio $samplingRatio")
+
+      // （3）按照采样率从数据集中抽取样本
       val samplePoints: Array[PointND] = features.sample(false, samplingRatio)
         .map(f => new PointND(f.getGeometry))
         .collect()
+      // （4） 构建样本坐标集
       sampleCoordinates = Array.ofDim[Double](numDimensions, samplePoints.length)
       for (i <- samplePoints.indices; d <- 0 until numDimensions)
         sampleCoordinates(d)(i) = samplePoints(i).getCoordinate(d)
     }
+
     // The histogram is computed in another round using the sparse method to reduce the shuffle size
+    // 第五步：计算样本分布的网格直方图
     if (histogramNeeded) {
       // Now, compute the histogram in one pass since the MBR is already calculated
       val numBuckets = (synopsisSize / 8).toInt
@@ -351,8 +370,11 @@ object IndexHelper extends Logging {
     * @return an RDD of (partition number, IFeature)
     */
   def partitionFeatures(features: SpatialRDD, spatialPartitioner: SpatialPartitioner): PartitionedSpatialRDD = {
+    // 首先利用空间分区器对要素进行空间分区，生成PairRDD，PairRDD的key是分区号
     val partitionIDFeaturePairs = _partitionFeatures(features, spatialPartitioner)
+
     // Enforce the partitioner to shuffle records by partition ID
+    // 调用PairRDD的partitionby方法，按照分区ID进行重新分区
     partitionIDFeaturePairs.partitionBy(new SparkSpatialPartitioner(spatialPartitioner))
   }
 
@@ -386,8 +408,10 @@ object IndexHelper extends Logging {
 
     //第一步：获取用户指定的分区基本参数
     val pInfo = parsePartitionCriterion(opts.getString(IndexHelper.PartitionCriterionThreshold, "Size(128m)"))
+
     //第二步：依据用户参数创建和构造分区器
     val spatialPartitioner = createPartitioner(features, partitionerClass, pInfo, sizeFunction, opts)
+
     //第三步： 利用分区器对数据集进行物理分区，生成partitionSpatialRDD
     partitionFeatures(features, spatialPartitioner)
   }
@@ -432,10 +456,13 @@ object IndexHelper extends Logging {
     do {
       tempFile = new Path("spatialPartitioner_"+(Math.random()*1000000).toInt);
     } while (fs.exists(tempFile))
+
     val out = new ObjectOutputStream(fs.create(tempFile))
     partitioner.writeExternal(out)
     out.close()
+
     fs.deleteOnExit(tempFile)
+
     hadoopConf.setClass(PartitionerClass, partitioner.getClass, classOf[SpatialPartitioner])
     hadoopConf.set(PartitionerValue, tempFile.toString)
   }
@@ -529,7 +556,7 @@ object IndexHelper extends Logging {
 
   /**
     * Save a partitioner dataset as a global index file to disk
-    *
+    * 对于已经完成分区的pairRDD，进行分块物理存储
     * @param partitionedFeatures features that are already partitioned using a spatial partitioner
     * @param path path to the output file to be written
     * @param opts any additional user options
@@ -539,15 +566,29 @@ object IndexHelper extends Logging {
       throw new RuntimeException("Cannot save non-partitioned features")
         if (!partitionedFeatures.partitioner.get.isInstanceOf[SparkSpatialPartitioner])
       throw new RuntimeException("Can only save features that are spatially partitioner")
+
+    // （1） 获取分区器
     val spatialPartitioner = partitionedFeatures.partitioner.get.asInstanceOf[SparkSpatialPartitioner].getSpatialPartitioner
     val hadoopConf = opts.loadIntoHadoopConf(new Configuration)
+
+    // （2） 将分区器信息保存到Hadoop的临时文件中，以便后续索引信息的永久存储。
     IndexHelper.savePartitionerToHadoopConfiguration(hadoopConf, spatialPartitioner)
+
+    // (3)  判断是否覆盖现有现有文件
     if (opts.getBoolean(SpatialOutputFormat.OverwriteOutput, false)) {
       val out: Path = new Path(path)
       val filesystem: FileSystem = out.getFileSystem(hadoopConf)
       if (filesystem.exists(out))
         filesystem.delete(out, true)
     }
+
+    // （4）调用RDD的hadoop文件存储方法，实现PairRDD的物理分区存储
+    //  path为存储路径
+    //  classOf[Any]为键值类
+    //  classOf[IFeature]为要素类
+    //  classOf[IndexOutputFormat]为输出格式类
+    //  hadoopConf为hadoop参数配置
+    //  注意： IndexOutputFormat为用户自定义的写格式输出器，写格式输出器会从临时文件中读取分区器信息
     partitionedFeatures.saveAsNewAPIHadoopFile(path, classOf[Any], classOf[IFeature], classOf[IndexOutputFormat], hadoopConf)
   }
 }

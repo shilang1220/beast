@@ -32,6 +32,7 @@ import java.io.IOException;
  * stores metadata about partitions including partition ID, MBR, file name, number of records, and total size in bytes.
  * @author Ahmed Eldawy
  *
+ * 索引输出格式类，
  */
 public class IndexOutputFormat extends FileOutputFormat<Integer, IFeature> {
   
@@ -39,7 +40,9 @@ public class IndexOutputFormat extends FileOutputFormat<Integer, IFeature> {
 
   @Override
   public RecordWriter<Integer, IFeature> getRecordWriter(TaskAttemptContext task) throws IOException {
+    // 创建分区文件
     Path file = getDefaultWorkFile(task, "").getParent();
+    // 写分区
     return new IndexRecordWriter(task, file);
   }
 
