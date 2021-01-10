@@ -63,6 +63,7 @@ object HistogramOP extends Logging {
   /**
    * Compute a point histogram for sparse histograms. It maps each record to a bucket and then aggregate by bucket.
    * This method can be helpful for very large histograms to avoid moving the entire histogram during the reduce step.
+   *
    * @param features the features to compute their histogram
    * @param sizeFunction the function that evaluates the size of each feature
    * @param mbb the minimum bounding box of the histogram, typically, this is the same as the input MBB
@@ -71,12 +72,15 @@ object HistogramOP extends Logging {
    */
   @varargs def computePointHistogramSparse(features: SpatialRDD, sizeFunction: IFeature => Int,
                                           mbb: EnvelopeNDLite, numBuckets: Int*): UniformHistogram = {
+
     val gridDimensions: Array[Int] = computeGridDimensions(mbb, numBuckets: _*)
+
     val binSize: RDD[(Int, Long)] = features.map(feature => {
       val center = new PointND(feature.getGeometry)
       val binID = UniformHistogram.getPointBinID(center, mbb, gridDimensions)
       (binID, sizeFunction(feature).toLong)
     }).filter(_._1 >= 0)
+
     val finalSizes: RDD[(Int, Long)] = binSize.reduceByKey(_+_)
     val finalHistogram: UniformHistogram = new UniformHistogram(mbb, gridDimensions:_*)
     finalSizes.collect.foreach(pt => finalHistogram.values(pt._1) = pt._2)

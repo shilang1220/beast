@@ -79,6 +79,7 @@ object Histogram extends CLIOperation with Logging {
 
   @throws(classOf[IOException])
   override def run(opts: BeastOptions, inputs: Array[String], outputs: Array[String], sc: SparkContext): AbstractHistogram = {
+
     // Extract user parameters
     val numBuckets = opts.getInt(NumBuckets, 1000)
     val bo: BeastOptions = opts

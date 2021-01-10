@@ -159,6 +159,7 @@ object IndexHelper extends Logging {
     // Calculate the summary
     // 第一步：计算数据集汇总信息（直方图、样本集和汇总信息）
     val t1 = System.nanoTime()
+
     val result = summarizeDataset(features.filter(f => !f.getGeometry.isEmpty), partitionerClass, synopsisSize, sizeFunction, balanced)
     //返回的三元组（histogram，samples，summary）
     val histogram: UniformHistogram = result._1
@@ -241,9 +242,12 @@ object IndexHelper extends Logging {
   private[beast] def summarizeDataset(features: SpatialRDD, partitionerClass: Class[_ <: SpatialPartitioner],
                                       summarySize: Long, sizeFunction: IFeature=>Int, balancedPartitioning: Boolean)
       : (UniformHistogram, Array[Array[Double]], Summary) = {
+
     lazy val sc: SparkContext = features.sparkContext
     import edu.ucr.cs.bdlab.beast.cg.CGOperationsMixin._
+
     // The summary is always computed
+    // 计算summary
     val summary: Summary = features.summary
     var sampleCoordinates: Array[Array[Double]] = null
     var histogram: UniformHistogram = null
@@ -267,13 +271,19 @@ object IndexHelper extends Logging {
       val sampleSize = (synopsisSize / (8 * numDimensions)).toInt
       val samplingRatio: Double = sampleSize.toDouble / summary.numFeatures min 1.0
       logInfo(s"Drawing a sample of roughly $sampleSize with ratio $samplingRatio")
+
+      // 调用采样函数
+      // 不同要素类型的样本，通过PointND的构造函数，统一转为点坐标（此处可优化）
       val samplePoints: Array[PointND] = features.sample(false, samplingRatio)
         .map(f => new PointND(f.getGeometry))
         .collect()
+
+      // 样本输出为：（维度，样本数量）二维数组形式
       sampleCoordinates = Array.ofDim[Double](numDimensions, samplePoints.length)
       for (i <- samplePoints.indices; d <- 0 until numDimensions)
         sampleCoordinates(d)(i) = samplePoints(i).getCoordinate(d)
     }
+
     // The histogram is computed in another round using the sparse method to reduce the shuffle size
     if (histogramNeeded) {
       // Now, compute the histogram in one pass since the MBR is already calculated
@@ -351,7 +361,10 @@ object IndexHelper extends Logging {
     * @return an RDD of (partition number, IFeature)
     */
   def partitionFeatures(features: SpatialRDD, spatialPartitioner: SpatialPartitioner): PartitionedSpatialRDD = {
+    //根据分区器为每个要素赋予一个分区ID，生成pairRDD
     val partitionIDFeaturePairs = _partitionFeatures(features, spatialPartitioner)
+
+    //采用Spark的内部机制，依据分区ID进行shuffle，使同一分区的要素聚集
     // Enforce the partitioner to shuffle records by partition ID
     partitionIDFeaturePairs.partitionBy(new SparkSpatialPartitioner(spatialPartitioner))
   }

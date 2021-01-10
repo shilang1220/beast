@@ -58,6 +58,8 @@ trait ReadWriteMixin {
 
     /**
      * Read the given file name as a spatial file and use the associated options to determine how to load it
+     *
+     *
      * @param filename the file name
      * @param opts the use options that can be used to determine how to load the file
      * @return the loaded file as a [[SpatialRDD]]

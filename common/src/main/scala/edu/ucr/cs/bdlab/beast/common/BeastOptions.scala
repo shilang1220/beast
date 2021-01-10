@@ -151,6 +151,7 @@ class BeastOptions(loadDefaults: Boolean = true)
    * Keep only the parameters that do not have an index or the ones with the given index. In other words, remove any
    * indexed parameter that have a different index than the one given. The index of the parameter is a suffix
    * between square brackets, e.g., param[1]
+   *
    * @param index the index to retain
    * @return a new options with the given index retained
    */

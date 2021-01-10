@@ -34,17 +34,18 @@ import java.util.Stack;
 
 /**
  * Writes the output files as configured by the user
+ * 根据用户参数创建写格式器的类
  */
 public class SpatialOutputFormat extends FileOutputFormat implements IConfigurable {
 
   /**The configuration for the class name of the FeatureWriterClass*/
   public static final String FeatureWriterClass = "SpatialOutputFormat.FeatureWriterClass";
   @OperationParam(
-      description = "The format of the input file {point(xcol,ycol),envelope(x1col,y1col,x2col,y2col),wkt(gcol)}\n" +
-          "\tpoint(xcol,ycol) indicates a CSV input where xcol and ycol indicate the indexes of the columns that" +
+      description = "The format of the output file {point(xcol,ycol),envelope(x1col,y1col,x2col,y2col),wkt(gcol)}\n" +
+          "\tpoint(xcol,ycol): indicates a CSV input where xcol and ycol indicate the indexes of the columns that" +
           "contain the x and y coordinates\n" +
-          "\tenvelope(x1col,y1col,x2col,y2col) indicate an input that contains rectangles stores in (x1,y1,x2,y2) format\n" +
-          "\twkt(gcol) indicate a CSV file with the field (gcol) containing a WKT-encoded geometry.\n" +
+          "\tenvelope(x1col,y1col,x2col,y2col): indicate an input that contains rectangles stores in (x1,y1,x2,y2) format\n" +
+          "\twkt(gcol): indicate a CSV file with the field (gcol) containing a WKT-encoded geometry.\n" +
           "\tshapefile: Esri shapefile. Accepts both .shp+.shx+.dbf files or a compressed .zip file with these three files\n" +
           "\trtree: An optimized R-tree index"
   )
@@ -106,6 +107,7 @@ public class SpatialOutputFormat extends FileOutputFormat implements IConfigurab
 
   /**
    * Create an uninitialized record writer
+   * 根据参数配置，创建记录写器
    * @param conf the system configuration
    * @return the configured feature writer
    */
@@ -122,8 +124,9 @@ public class SpatialOutputFormat extends FileOutputFormat implements IConfigurab
   }
 
   /**
-   * Sets the given user-friendly output format in the configuration and sets the corresponding
+   * Sets the given user-friendly output format in the configuration and sets the corresponding   *
    * FeatureWriterClass in the configuration.
+   * 创建
    * @param conf the system configuration
    * @param oFormat the user-friendly input format string
    */
@@ -131,6 +134,8 @@ public class SpatialOutputFormat extends FileOutputFormat implements IConfigurab
     Class<? extends FeatureWriter> writerClass;
     conf.set(SpatialOutputFormat.OutputFormat, oFormat);
     writerClass = getFeatureWriterClass(oFormat);
+
+    // 如果未能成功创建输出器，则根据用户输入的字符串自动推断输出格式
     if (writerClass == null) {
       int i1 = oFormat.indexOf('(');
       if (i1 != -1)
@@ -148,6 +153,7 @@ public class SpatialOutputFormat extends FileOutputFormat implements IConfigurab
             StringUtil.humandReable(suggestions, "or"), oFormat);
       throw new OperationException(errorMessage);
     }
+
     conf.setClass(FeatureWriterClass, writerClass, FeatureWriter.class);
   }
 

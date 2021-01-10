@@ -405,6 +405,7 @@ object Summary {
 
   /**
    * Compute the summary of a set of features with a custom function for estimating the size of a features
+   * 用指定的大小计算函数，，估算输入数据集的计算
    * @param features the set of features to summarize
    * @param sizeFunction a function that returns the size for each features
    * @return the summary of the input features
