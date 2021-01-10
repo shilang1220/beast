@@ -171,6 +171,7 @@ public class RGrovePartitioner implements SpatialPartitioner {
     return minCoord == null? 0 : minCoord.length;
   }
 
+  // 分区器数据写函数，会被索引存储方法调用
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     GeometryHelper.writeIEnvelope(inputMBR, out);

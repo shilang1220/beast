@@ -97,12 +97,14 @@ public class IndexRecordWriter extends RecordWriter<Integer, IFeature> {
 
   public IndexRecordWriter(TaskAttemptContext task, String name, Path outPath)
       throws IOException {
+    // 从hadoop临时文件中，读取分区信息，
     this(IndexHelper.readPartitionerFromHadoopConfiguration(task.getConfiguration()), name, outPath, task.getConfiguration());
     this.progress = task;
   }
 
   /**
    * Create a record writer for index files
+   * 为索引文件创建一个记录输出器
    * @param partitioner the partitioner used to partition records into files
    * @param name A unique name added to the global index file which is used
    *             to prevent multiple reducers from writing separate files with
@@ -118,12 +120,16 @@ public class IndexRecordWriter extends RecordWriter<Integer, IFeature> {
     this.outFS = outPath.getFileSystem(conf);
     this.outPath = outPath;
     this.partitioner = partitioner;
+
     String globalIndexExtension = partitioner.getClass().getAnnotation(SpatialPartitioner.Metadata.class).extension();
+
     Path masterFilePath = name == null ?
         new Path(outPath, String.format("_master.%s", globalIndexExtension)) :
         new Path(outPath, String.format("_master_%s.%s", name, globalIndexExtension));
+
     this.masterFile = outFS.create(masterFilePath);
     writerClass = SpatialOutputFormat.getConfiguredFeatureWriterClass(conf);
+
     // Get writer class metadata if it is defined
     this.writerClassMetadata = writerClass.getAnnotation(FeatureWriter.Metadata.class);
   }

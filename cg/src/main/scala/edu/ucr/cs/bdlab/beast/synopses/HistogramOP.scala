@@ -82,6 +82,7 @@ object HistogramOP extends Logging {
     }).filter(_._1 >= 0)
 
     val finalSizes: RDD[(Int, Long)] = binSize.reduceByKey(_+_)
+
     val finalHistogram: UniformHistogram = new UniformHistogram(mbb, gridDimensions:_*)
     finalSizes.collect.foreach(pt => finalHistogram.values(pt._1) = pt._2)
     finalHistogram
